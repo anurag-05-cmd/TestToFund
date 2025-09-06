@@ -1,3 +1,4 @@
 backend/node_modules/
 Readme.md
+.env
 contracts/node_modules/
