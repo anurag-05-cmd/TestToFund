@@ -13,6 +13,13 @@ type Props = {
 export default function SendTokensResult({ txHash, senderBefore, senderAfter, receiver, toAddress, explorerBase }: Props) {
   if (!txHash) return null;
   const explorer = (explorerBase || 'https://primordial.bdagscan.com/tx/') + txHash;
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      // ignore
+    }
+  };
   return (
     <div className="p-4 border rounded-md bg-green-50 shadow-sm flex flex-col gap-2">
       <div className="flex items-center gap-2 mb-2">
@@ -22,11 +29,13 @@ export default function SendTokensResult({ txHash, senderBefore, senderAfter, re
         <h3 className="text-lg font-semibold text-green-700">Transfer Confirmed</h3>
       </div>
       <div className="text-sm flex flex-col gap-1">
-        <span>
-          <span className="font-medium">Tx:</span> <a href={explorer} target="_blank" rel="noreferrer" className="text-blue-600 underline break-all">{txHash}</a>
+        <span className="flex items-center gap-2">
+          <span className="font-medium">Tx:</span>
+          <a href={explorer} target="_blank" rel="noreferrer" className="text-blue-600 underline break-all">{txHash}</a>
+          <button onClick={() => copy(txHash)} className="ml-2 text-xs px-2 py-1 bg-gray-100 rounded">Copy</button>
         </span>
         {toAddress && (
-          <span><span className="font-medium">To:</span> <span className="font-mono bg-gray-100 px-1 rounded text-xs">{toAddress}</span></span>
+          <span className="flex items-center gap-2"><span className="font-medium">To:</span> <span className="font-mono bg-gray-100 px-1 rounded text-xs">{toAddress}</span><button onClick={() => copy(toAddress)} className="ml-2 text-xs px-2 py-1 bg-gray-100 rounded">Copy</button></span>
         )}
         {senderBefore && (
           <span><span className="font-medium">Sender balance before:</span> <span className="font-mono">{senderBefore} TTF</span></span>
