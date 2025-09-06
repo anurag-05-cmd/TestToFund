@@ -1,0 +1,1 @@
+Use the script scripts/deploy.js to deploy to a local Hardhat node or configured network.

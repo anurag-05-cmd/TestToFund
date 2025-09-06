@@ -1,0 +1,16 @@
+{
+  "name": "contracts",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network localhost"
+  },
+  "devDependencies": {
+    "hardhat": "^2.18.0",
+    "chai": "^4.3.7",
+    "ethers": "^5.7.2",
+    "@nomicfoundation/hardhat-toolbox": "^2.0.0"
+  }
+}
