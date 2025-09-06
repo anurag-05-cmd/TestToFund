@@ -1,43 +1,104 @@
-require("dotenv").config();
-const { ethers } = require("hardhat");
+require('dotenv').config();
+const ethers = require('ethers');
 
 async function main() {
-  const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
+  const RPC_URL = process.env.RPC_URL;
+  const PRIVATE_KEY = process.env.PRIVATE_KEY;
+  const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
 
-  const tokenAddress = process.env.TOKEN_ADDRESS;
+  if (!RPC_URL || !TOKEN_ADDRESS) {
+    console.error('RPC_URL and TOKEN_ADDRESS must be set in contracts/.env');
+    process.exit(1);
+  }
 
-  // ERC20 ABI (only functions we need: balanceOf, transfer)
+  // CLI args: node sendTokens.js <to> <amount> [--confirm]
+  const argv = process.argv.slice(2);
+  const to = argv[0] || process.env.TO_ADDRESS;
+  const amountInput = argv[1] || process.env.AMOUNT || '0';
+  const confirm = argv.includes('--confirm') || process.env.CONFIRM === '1';
+
+  if (!to) {
+    console.error('Missing recipient address. Usage: node sendTokens.js <to> <amount> [--confirm]');
+    process.exit(1);
+  }
+
+  const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+
+  let wallet;
+  if (PRIVATE_KEY) {
+    wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+  }
+
   const erc20ABI = [
-    "function balanceOf(address owner) view returns (uint256)",
-    "function transfer(address to, uint256 value) returns (bool)"
+    'function name() view returns (string)',
+    'function symbol() view returns (string)',
+    'function decimals() view returns (uint8)',
+    'function balanceOf(address owner) view returns (uint256)',
+    'function transfer(address to, uint256 value) returns (bool)'
   ];
 
-  const token = new ethers.Contract(tokenAddress, erc20ABI, wallet);
+  const signerOrProvider = wallet || provider;
+  const token = new ethers.Contract(TOKEN_ADDRESS, erc20ABI, signerOrProvider);
 
-  // Receiver BDAG testnet wallet
-  const to = "0x74E61884E61Eb483AF2C076b48D99A0Baa96AD67"; // This is the address where the money needs to be sent or TTF.
-  const amount = ethers.utils.parseUnits("2000", 18); // 2000 TTF
+  try {
+    const [name, symbol, decimals] = await Promise.all([
+      token.name().catch(() => 'TTF'),
+      token.symbol().catch(() => 'TTF'),
+      token.decimals().catch(() => 18)
+    ]);
 
-  // Show sender balance before
-  const balanceBefore = await token.balanceOf(wallet.address);
-  console.log(`Sender balance before: ${ethers.utils.formatUnits(balanceBefore, 18)} TTF`);
+    console.log(`Token: ${name} (${symbol})`);
+    console.log(`Address: ${TOKEN_ADDRESS}`);
+    console.log(`Decimals: ${decimals}`);
 
-  console.log(`Sending 2000 TTF to ${to}...`);
-  const tx = await token.transfer(to, amount);
-  await tx.wait();
+    // Validate recipient
+    if (!ethers.utils.isAddress(to)) {
+      throw new Error('Invalid recipient address');
+    }
 
-  console.log("✅ Transfer confirmed:", tx.hash);
+    const amount = ethers.utils.parseUnits(amountInput || '0', decimals);
 
-  // Show balances after
-  const balanceAfter = await token.balanceOf(wallet.address);
-  console.log(`Sender balance after: ${ethers.utils.formatUnits(balanceAfter, 18)} TTF`);
+    // Show balances before
+    if (wallet) {
+      const balanceBefore = await token.balanceOf(wallet.address);
+      console.log(`Sender balance before: ${ethers.utils.formatUnits(balanceBefore, decimals)} ${symbol}`);
+    } else {
+      console.log('No PRIVATE_KEY provided; running in read-only / dry-run mode.');
+    }
 
-  const receiverBalance = await token.balanceOf(to);
-  console.log(`Receiver balance: ${ethers.utils.formatUnits(receiverBalance, 18)} TTF`);
+    const receiverBefore = await token.balanceOf(to);
+    console.log(`Receiver balance before: ${ethers.utils.formatUnits(receiverBefore, decimals)} ${symbol}`);
+
+    console.log(`Prepared transfer: ${ethers.utils.formatUnits(amount, decimals)} ${symbol} -> ${to}`);
+
+    // If not confirmed, just print the encoded tx data and exit
+    const iface = new ethers.utils.Interface(erc20ABI);
+    const data = iface.encodeFunctionData('transfer', [to, amount]);
+    console.log('Encoded tx data:', data);
+
+    if (!confirm) {
+      console.log('Dry-run (no transfer). Re-run with --confirm or set CONFIRM=1 to actually send.');
+      process.exit(0);
+    }
+
+    if (!wallet) {
+      console.error('Cannot send transaction: PRIVATE_KEY not set in contracts/.env');
+      process.exit(1);
+    }
+
+    console.log(`Sending ${ethers.utils.formatUnits(amount, decimals)} ${symbol} to ${to}...`);
+    const tx = await token.transfer(to, amount);
+    const receipt = await tx.wait();
+    console.log('✅ Transfer confirmed:', receipt.transactionHash);
+
+    const balanceAfter = await token.balanceOf(wallet.address);
+    console.log(`Sender balance after: ${ethers.utils.formatUnits(balanceAfter, decimals)} ${symbol}`);
+    const receiverAfter = await token.balanceOf(to);
+    console.log(`Receiver balance after: ${ethers.utils.formatUnits(receiverAfter, decimals)} ${symbol}`);
+  } catch (err) {
+    console.error('Error:', err && err.message ? err.message : err);
+    process.exit(1);
+  }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main();

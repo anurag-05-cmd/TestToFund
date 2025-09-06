@@ -3,7 +3,7 @@ const blockchain = require('./blockchainService');
 
 async function issueRewardForUser(user, amount, meta = {}) {
   // Create pending transaction
-  const tx = await Transaction.create({ userId: user.id, amount, status: 'pending', meta });
+  const tx = await Transaction.create({ userId: user._id || user.id, amount, status: 'pending', meta });
   try {
     const res = await blockchain.sendReward(user.wallet, amount);
     if (res && res.success) {

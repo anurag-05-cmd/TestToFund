@@ -1,40 +1,12 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Progress = sequelize.define('Progress', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  videoId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  watchedSec: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-  },
-  watchedPct: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-    defaultValue: 0,
-  },
-  validated: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  evidence: {
-    type: DataTypes.JSON,
-    allowNull: true,
-  }
-}, {
-  tableName: 'progress',
-});
+const ProgressSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  videoId: { type: mongoose.Schema.Types.ObjectId, ref: 'Video', required: true },
+  watchedSec: { type: Number, default: 0 },
+  watchedPct: { type: Number, default: 0 },
+  validated: { type: Boolean, default: false },
+  evidence: { type: mongoose.Schema.Types.Mixed, default: null },
+}, { collection: 'progress', timestamps: true });
 
-module.exports = Progress;
+module.exports = mongoose.models.Progress || mongoose.model('Progress', ProgressSchema);

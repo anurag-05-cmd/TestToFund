@@ -1,0 +1,35 @@
+-- Minimal schema for Postgres to match Sequelize models
+
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  wallet TEXT NOT NULL UNIQUE,
+  suspended BOOLEAN DEFAULT false,
+  metadata JSONB
+);
+
+CREATE TABLE IF NOT EXISTS videos (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  durationSec INTEGER DEFAULT 0 NOT NULL,
+  rewardAmount INTEGER DEFAULT 2000 NOT NULL,
+  metadata JSONB
+);
+
+CREATE TABLE IF NOT EXISTS progress (
+  id SERIAL PRIMARY KEY,
+  userId INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  videoId INTEGER NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+  watchedSec INTEGER DEFAULT 0 NOT NULL,
+  watchedPct DOUBLE PRECISION DEFAULT 0 NOT NULL,
+  validated BOOLEAN DEFAULT false,
+  evidence JSONB
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id SERIAL PRIMARY KEY,
+  "userId" INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  "txHash" TEXT,
+  amount INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  meta JSONB
+);

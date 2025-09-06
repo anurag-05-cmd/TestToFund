@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      ethers:
+        specifier: ^5.8.0
+        version: 5.8.0
     devDependencies:
       '@nomicfoundation/hardhat-toolbox':
         specifier: ^2.0.0

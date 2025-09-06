@@ -1,32 +1,10 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Video = sequelize.define('Video', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  title: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  durationSec: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
-  },
-  rewardAmount: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 2000,
-  },
-  metadata: {
-    type: DataTypes.JSON,
-    allowNull: true,
-  }
-}, {
-  tableName: 'videos',
-});
+const VideoSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  durationSec: { type: Number, default: 0 },
+  rewardAmount: { type: Number, default: 2000 },
+  metadata: { type: mongoose.Schema.Types.Mixed, default: null },
+}, { collection: 'videos', timestamps: true });
 
-module.exports = Video;
+module.exports = mongoose.models.Video || mongoose.model('Video', VideoSchema);

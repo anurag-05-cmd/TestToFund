@@ -13,5 +13,8 @@
         "compile": "hardhat compile",
         "deploy:testnet": "hardhat run scripts/deploy.js --network testnet",
         "test": "hardhat test"
+    },
+    "dependencies": {
+        "ethers": "^5.8.0"
     }
 }

@@ -1,27 +1,9 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const mongoose = require('mongoose');
 
-const User = sequelize.define('User', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  wallet: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
-  },
-  suspended: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false,
-  },
-  metadata: {
-    type: DataTypes.JSON,
-    allowNull: true,
-  }
-}, {
-  tableName: 'users',
-});
+const UserSchema = new mongoose.Schema({
+  wallet: { type: String, required: true, unique: true },
+  suspended: { type: Boolean, default: false },
+  metadata: { type: mongoose.Schema.Types.Mixed, default: null },
+}, { collection: 'users', timestamps: true });
 
-module.exports = User;
+module.exports = mongoose.models.User || mongoose.model('User', UserSchema);

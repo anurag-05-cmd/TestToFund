@@ -11,7 +11,7 @@ async function reportProgress(req, res) {
   if (!wallet) return res.status(400).json({ error: 'wallet_required' });
 
   try {
-    const user = await User.findOrCreate({ where: { wallet } }).then(r => r[0]);
+  const user = await User.findOneAndUpdate({ wallet }, { wallet }, { upsert: true, new: true, setDefaultsOnInsert: true });
     const video = await Video.findByPk(videoId);
     if (!video) return res.status(404).json({ error: 'video_not_found' });
 

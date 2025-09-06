@@ -1,5 +1,4 @@
-ignoredBuiltDependencies:
-  - better-sqlite3
+ignoredBuiltDependencies: []
 
 onlyBuiltDependencies:
-  - sqlite3
+  - mongodb-memory-server

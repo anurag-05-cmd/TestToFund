@@ -1,35 +1,11 @@
-const { DataTypes } = require('sequelize');
-const { sequelize } = require('../config/database');
+const mongoose = require('mongoose');
 
-const Transaction = sequelize.define('Transaction', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  txHash: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
-  amount: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  status: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    defaultValue: 'pending',
-  },
-  meta: {
-    type: DataTypes.JSON,
-    allowNull: true,
-  }
-}, {
-  tableName: 'transactions',
-});
+const TransactionSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  txHash: { type: String, default: null },
+  amount: { type: Number, required: true },
+  status: { type: String, default: 'pending' },
+  meta: { type: mongoose.Schema.Types.Mixed, default: null },
+}, { collection: 'transactions', timestamps: true });
 
-module.exports = Transaction;
+module.exports = mongoose.models.Transaction || mongoose.model('Transaction', TransactionSchema);
