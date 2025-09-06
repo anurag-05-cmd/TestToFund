@@ -1,2 +1,0 @@
-// helpers placeholder
-module.exports = {};

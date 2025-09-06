@@ -1,16 +1,16 @@
 {
-  "name": "contracts",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "test": "hardhat test",
-    "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.js --network localhost"
-  },
-  "devDependencies": {
-    "hardhat": "^2.18.0",
-    "chai": "^4.3.7",
-    "ethers": "^5.7.2",
-    "@nomicfoundation/hardhat-toolbox": "^2.0.0"
-  }
+    "name": "skill-to-earn-contracts",
+    "version": "0.1.0",
+    "private": true,
+    "devDependencies": {
+        "hardhat": "^2.17.0",
+        "@nomicfoundation/hardhat-toolbox": "^2.0.0",
+        "@openzeppelin/contracts": "^4.9.3",
+        "dotenv": "^16.0.0"
+    },
+    "scripts": {
+        "compile": "hardhat compile",
+        "deploy:testnet": "hardhat run scripts/deploy.js --network testnet",
+        "test": "hardhat test"
+    }
 }

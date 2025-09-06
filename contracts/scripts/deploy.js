@@ -1,19 +1,36 @@
+// scripts/deploy.js
+const fs = require("fs");
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, "..", ".env") });
+
 async function main() {
-  const [deployer] = await ethers.getSigners();
-  console.log('Deploying contracts with', deployer.address);
+  const hre = require("hardhat");
+  const ethers = hre.ethers;
+  const deployer = (await ethers.getSigners())[0];
 
-  const Token = await ethers.getContractFactory('BDAGToken');
-  const token = await Token.deploy(ethers.utils.parseUnits('1000000', 18));
+  console.log(`🚀 Using deployer: ${deployer.address}`);
+
+  // Deploy token, minting entire supply to deployer
+  const Token = await ethers.getContractFactory("BDAGToken");
+  const initialSupply = ethers.utils.parseUnits("1000000", 18); // 1M TTF
+  const token = await Token.connect(deployer).deploy(initialSupply);
   await token.deployed();
-  console.log('Token deployed to', token.address);
+  console.log(`✅ Deployed BDAGToken (TTF) at: ${token.address}`);
 
-  const Pool = await ethers.getContractFactory('SkillToEarnPool');
-  const pool = await Pool.deploy(token.address);
-  await pool.deployed();
-  console.log('Pool deployed to', pool.address);
+  // Balances
+  const balance = await token.balanceOf(deployer.address);
+  console.log(`Deployer balance: ${ethers.utils.formatUnits(balance, 18)} TTF`);
+
+  // Write only TOKEN_ADDRESS, because your wallet is the pool
+  const outPath = path.join(__dirname, "..", "deployed.env");
+  const content = `TOKEN_ADDRESS=${token.address}\nPOOL_WALLET=${deployer.address}\n`;
+  fs.writeFileSync(outPath, content, "utf8");
+  console.log(`Wrote contracts/deployed.env with TOKEN_ADDRESS and POOL_WALLET`);
 }
 
-main().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch(err => {
+    console.error(err);
+    process.exit(1);
+  });

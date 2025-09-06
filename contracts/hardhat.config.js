@@ -1,11 +1,15 @@
-require('@nomicfoundation/hardhat-toolbox');
-require('dotenv').config();
+require("dotenv").config({ path: __dirname + "/.env" });
+require("@nomicfoundation/hardhat-toolbox");
+
+const { RPC_URL, PRIVATE_KEY } = process.env;
 
 module.exports = {
-  solidity: '0.8.20',
+  solidity: "0.8.19",
   networks: {
-    localhost: {
-      url: process.env.RPC_URL || 'http://127.0.0.1:8545'
-    }
+    testnet: {
+      url: RPC_URL || "https://rpc.primordial.bdagscan.com/",
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : []
+    },
+    hardhat: {}
   }
 };

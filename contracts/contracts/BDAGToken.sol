@@ -1,10 +1,15 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+    // SPDX-License-Identifier: MIT
+    pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+    import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+    import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract BDAGToken is ERC20 {
-    constructor(uint256 initialSupply) ERC20("BDAG Token", "BDAG") {
-        _mint(msg.sender, initialSupply);
+    contract BDAGToken is ERC20, Ownable {
+        constructor(uint256 initialSupply) ERC20("Test 2 Fund", "TTF") {
+            _mint(msg.sender, initialSupply);
+        }
+
+        function mint(address to, uint256 amount) external onlyOwner {
+            _mint(to, amount);
+        }
     }
-}
