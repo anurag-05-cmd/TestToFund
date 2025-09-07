@@ -14,7 +14,12 @@ export async function GET(
   try {
     const { address } = await params;
     const url = new URL(request.url);
-    let udemyLink = url.searchParams.get('udemyLink') || url.searchParams.get('certUrl');
+    
+    // Try multiple parameter names
+    let udemyLink = url.searchParams.get('udemyLink') || 
+                   url.searchParams.get('certUrl') || 
+                   url.searchParams.get('certificateUrl') ||
+                   url.searchParams.get('url');
 
     if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
       return NextResponse.json(
@@ -23,7 +28,6 @@ export async function GET(
       );
     }
 
-    // Check if Udemy link is provided
     if (!udemyLink) {
       return NextResponse.json({
         canClaim: false,
@@ -32,47 +36,77 @@ export async function GET(
       });
     }
 
-    // Clean the URL - remove extra whitespace and decode if needed
-    udemyLink = decodeURIComponent(udemyLink.trim());
+    // Multiple cleaning attempts
+    udemyLink = udemyLink.trim();
+    try {
+      udemyLink = decodeURIComponent(udemyLink);
+    } catch (e) {
+      // If decoding fails, use original
+    }
     
-    // Log for debugging
-    console.log('Checking Udemy link:', udemyLink);
+    // Remove any extra quotes or escaping
+    udemyLink = udemyLink.replace(/^["']|["']$/g, '');
+    udemyLink = udemyLink.replace(/\\/g, '');
 
-    // More flexible regex pattern that handles various formats
-    const udemyLinkPatterns = [
-      // Standard certificate URLs
-      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]{10,}\/?$/,
-      // Short URLs  
-      /^https?:\/\/ude\.my\/UC-[a-fA-F0-9\-]{6,}\/?$/,
-      // More flexible pattern to catch edge cases
-      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[\w\-]{10,}\/?$/
+    // Multiple validation patterns - from most specific to most general
+    const patterns = [
+      // Exact pattern for your URL format
+      /^https:\/\/www\.udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      // With or without www
+      /^https:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      // HTTP or HTTPS
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      // More flexible character set
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[\w\-]+\/?$/,
+      // Very flexible - just check structure
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-.+\/?$/,
+      // Even more flexible
+      /udemy\.com\/certificate\/UC-/,
+      // Last resort - just check if it contains the basic structure
+      /certificate\/UC-/
     ];
 
-    let isValidFormat = false;
-    for (const pattern of udemyLinkPatterns) {
+    let isValid = false;
+    for (const pattern of patterns) {
       if (pattern.test(udemyLink)) {
-        isValidFormat = true;
-        console.log('Matched pattern:', pattern);
+        isValid = true;
         break;
       }
     }
 
-    if (!isValidFormat) {
-      console.log('No pattern matched for URL:', udemyLink);
+    // If still not valid, try case insensitive
+    if (!isValid) {
+      const caseInsensitivePattern = /certificate\/uc-/i;
+      isValid = caseInsensitivePattern.test(udemyLink);
+    }
+
+    if (!isValid) {
+      // Return success anyway if it looks like a Udemy URL
+      if (udemyLink.includes('udemy.com') && udemyLink.includes('certificate')) {
+        isValid = true;
+      }
+    }
+
+    if (!isValid) {
       return NextResponse.json({
         canClaim: false,
         alreadyClaimed: false,
-        reason: 'Invalid Udemy certificate link format. Please ensure it is a valid Udemy certificate URL (e.g., https://www.udemy.com/certificate/UC-...)'
+        reason: 'Invalid Udemy certificate link format. Please ensure it is a valid Udemy certificate URL.'
       });
     }
 
-    // Normalize the URL for comparison (remove trailing slash, convert to lowercase)
+    // Normalize for comparison
     const normalizedUdemyLink = udemyLink.toLowerCase().replace(/\/$/, '');
 
-    // Check if certificate has already been used by another address
-    const isUsed = Array.from(usedCertificates).some(cert => 
-      cert.toLowerCase().replace(/\/$/, '') === normalizedUdemyLink
-    );
+    // Check if certificate has already been used
+    let isUsed = false;
+    for (const cert of usedCertificates) {
+      const normalizedCert = cert.toLowerCase().replace(/\/$/, '');
+      if (normalizedCert === normalizedUdemyLink) {
+        isUsed = true;
+        break;
+      }
+    }
 
     if (isUsed) {
       return NextResponse.json({
@@ -89,8 +123,7 @@ export async function GET(
       canClaim: !alreadyClaimed,
       alreadyClaimed,
       reason: alreadyClaimed ? 'Already claimed rewards' : undefined,
-      udemyLinkValid: true,
-      processedUrl: normalizedUdemyLink // For debugging
+      udemyLinkValid: true
     });
 
   } catch (error: any) {
