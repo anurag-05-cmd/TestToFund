@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   keywords: "TestToFund, TTF tokens, learn to earn, blockchain education, cryptocurrency rewards",
   authors: [{ name: "TestToFund Team" }],
   openGraph: {
-    title: "TestToFund - Learn, Validate, Earn",
+    title: "TestToFund - Test, Trust, Fund.",
     description: "Transform your knowledge into rewards with TestToFund",
     type: "website",
   },
