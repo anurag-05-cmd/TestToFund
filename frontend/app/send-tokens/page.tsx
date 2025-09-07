@@ -88,47 +88,47 @@ export default function SendTokensPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-4">Send TTF Tokens</h1>
+      <h1 className="text-2xl font-bold mb-4 text-gray-900">Send TTF Tokens</h1>
   <form onSubmit={doSend} className="space-y-4 mb-6">
         <div>
-          <label className="block text-sm font-medium">Recipient address</label>
-          <input className="mt-1 block w-full rounded border p-2" value={to} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTo(e.target.value)} placeholder="0x..." />
+          <label className="block text-sm font-medium text-gray-700">Recipient address</label>
+          <input className="mt-1 block w-full rounded border border-gray-300 focus:border-[#00A88E] focus:ring-2 focus:ring-[#00A88E]/20 p-2 outline-none transition-colors" value={to} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTo(e.target.value)} placeholder="0x..." />
         </div>
         <div>
-          <label className="block text-sm font-medium">Amount (TTF)</label>
-          <input className="mt-1 block w-full rounded border p-2" value={amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)} />
+          <label className="block text-sm font-medium text-gray-700">Amount (TTF)</label>
+          <input className="mt-1 block w-full rounded border border-gray-300 focus:border-[#00A88E] focus:ring-2 focus:ring-[#00A88E]/20 p-2 outline-none transition-colors" value={amount} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)} />
         </div>
         <div>
           <div className="flex items-center gap-4">
             <label className="inline-flex items-center">
-              <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="mr-2" />
-              Dry-run (simulate)
+              <input type="checkbox" checked={dryRun} onChange={(e) => setDryRun(e.target.checked)} className="mr-2 accent-[#00A88E]" />
+              <span className="text-gray-700">Dry-run (simulate)</span>
             </label>
-            <button type="submit" disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-[#00A88E] hover:bg-[#00967D] disabled:bg-gray-400 text-white rounded transition-colors">
               {loading ? (dryRun ? 'Simulating...' : 'Sending...') : (dryRun ? 'Simulate' : 'Send tokens')}
             </button>
           </div>
         </div>
-        {error && <div className="text-red-600">{error}</div>}
+        {error && <div className="text-red-600 bg-red-50 border border-red-200 rounded p-3">{error}</div>}
       </form>
 
       {logs.length > 0 && (
-        <div className="mb-4 p-3 bg-gray-50 border rounded text-sm font-mono whitespace-pre-line">
+        <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded text-sm font-mono whitespace-pre-line">
           {logs.map((ln, i) => (
-            <div key={i}>{ln}</div>
+            <div key={i} className={ln.includes('✅') ? 'text-[#00A88E]' : ln.includes('Error') ? 'text-red-600' : 'text-gray-700'}>{ln}</div>
           ))}
         </div>
       )}
 
       {encodedData && (
-        <div className="mb-4 p-3 bg-yellow-50 border rounded text-sm font-mono">
-          <div className="font-medium">Encoded transaction data (transfer)</div>
-          <div className="break-all mt-2">{encodedData}</div>
+        <div className="mb-4 p-3 bg-[#00A88E]/5 border border-[#00A88E]/20 rounded text-sm font-mono">
+          <div className="font-medium text-[#00A88E]">Encoded transaction data (transfer)</div>
+          <div className="break-all mt-2 text-gray-700">{encodedData}</div>
         </div>
       )}
 
       {networkName && (
-        <div className="mb-4 text-sm text-gray-700">Connected network: <span className="font-mono">{networkName}</span></div>
+        <div className="mb-4 text-sm text-gray-700">Connected network: <span className="font-mono text-[#00A88E]">{networkName}</span></div>
       )}
 
       <SendTokensResult txHash={txHash} senderBefore={senderBefore} senderAfter={senderAfter} receiver={receiverBal} toAddress={to} />

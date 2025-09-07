@@ -75,25 +75,26 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="w-full border-b py-3 px-6 bg-white/80 backdrop-blur-sm">
+    <header className="w-full border-b border-gray-200 py-3 px-6 bg-white/90 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/" className="font-semibold text-lg">TTF</Link>
+          <Link href="/" className="font-bold text-xl text-[#00A88E]">TTF</Link>
           <nav className="flex items-center gap-3 text-sm text-gray-700">
-            <Link href="/send-tokens" className="hover:underline">Send</Link>
-            <Link href="/rewards" className="hover:underline">Rewards</Link>
+            <Link href="/home" className="hover:text-[#00A88E] transition-colors">Home</Link>
+            <Link href="/send-tokens" className="hover:text-[#00A88E] transition-colors">Send</Link>
+            <Link href="/rewards" className="hover:text-[#00A88E] transition-colors">Rewards</Link>
           </nav>
         </div>
 
         <div className="flex items-center gap-3">
-          {network && <div className="text-xs text-gray-600 font-mono">{network}</div>}
+          {network && <div className="text-xs text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded">{network}</div>}
           {address ? (
             <div className="flex items-center gap-3">
-              <div className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">{address.slice(0,6)}...{address.slice(-4)}</div>
-              {balance && <div className="text-sm text-gray-700">{balance} TTF</div>}
+              <div className="text-sm font-mono bg-[#00A88E]/10 text-[#00A88E] border border-[#00A88E]/20 px-2 py-1 rounded">{address.slice(0,6)}...{address.slice(-4)}</div>
+              {balance && <div className="text-sm text-gray-700 font-medium">{balance} <span className="text-[#00A88E]">TTF</span></div>}
             </div>
           ) : (
-            <button onClick={handleConnect} disabled={loading} className="px-3 py-2 bg-blue-600 text-white rounded text-sm">
+            <button onClick={handleConnect} disabled={loading} className="px-3 py-2 bg-[#00A88E] hover:bg-[#00967D] text-white rounded text-sm transition-colors">
               {loading ? 'Connecting...' : 'Connect Wallet'}
             </button>
           )}

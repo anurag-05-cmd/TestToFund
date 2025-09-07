@@ -21,30 +21,30 @@ export default function SendTokensResult({ txHash, senderBefore, senderAfter, re
     }
   };
   return (
-    <div className="p-4 border rounded-md bg-green-50 shadow-sm flex flex-col gap-2">
+    <div className="p-4 border border-[#00A88E]/20 rounded-md bg-[#00A88E]/5 shadow-sm flex flex-col gap-2">
       <div className="flex items-center gap-2 mb-2">
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-green-200 text-green-700">
-          <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#4ade80"/><path d="M6 10.5l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#00A88E]/20 text-[#00A88E]">
+          <svg width="20" height="20" fill="none" viewBox="0 0 20 20"><circle cx="10" cy="10" r="10" fill="#00A88E"/><path d="M6 10.5l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </span>
-        <h3 className="text-lg font-semibold text-green-700">Transfer Confirmed</h3>
+        <h3 className="text-lg font-semibold text-[#00A88E]">Transfer Confirmed</h3>
       </div>
       <div className="text-sm flex flex-col gap-1">
         <span className="flex items-center gap-2">
           <span className="font-medium">Tx:</span>
-          <a href={explorer} target="_blank" rel="noreferrer" className="text-blue-600 underline break-all">{txHash}</a>
-          <button onClick={() => copy(txHash)} className="ml-2 text-xs px-2 py-1 bg-gray-100 rounded">Copy</button>
+          <a href={explorer} target="_blank" rel="noreferrer" className="text-[#409F01] hover:text-[#367A01] underline break-all transition-colors">{txHash}</a>
+          <button onClick={() => copy(txHash)} className="ml-2 text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">Copy</button>
         </span>
         {toAddress && (
-          <span className="flex items-center gap-2"><span className="font-medium">To:</span> <span className="font-mono bg-gray-100 px-1 rounded text-xs">{toAddress}</span><button onClick={() => copy(toAddress)} className="ml-2 text-xs px-2 py-1 bg-gray-100 rounded">Copy</button></span>
+          <span className="flex items-center gap-2"><span className="font-medium">To:</span> <span className="font-mono bg-gray-100 px-1 rounded text-xs">{toAddress}</span><button onClick={() => copy(toAddress)} className="ml-2 text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors">Copy</button></span>
         )}
         {senderBefore && (
-          <span><span className="font-medium">Sender balance before:</span> <span className="font-mono">{senderBefore} TTF</span></span>
+          <span><span className="font-medium">Sender balance before:</span> <span className="font-mono text-[#00A88E]">{senderBefore} TTF</span></span>
         )}
         {senderAfter && (
-          <span><span className="font-medium">Sender balance after:</span> <span className="font-mono">{senderAfter} TTF</span></span>
+          <span><span className="font-medium">Sender balance after:</span> <span className="font-mono text-[#00A88E]">{senderAfter} TTF</span></span>
         )}
         {receiver && (
-          <span><span className="font-medium">Receiver balance:</span> <span className="font-mono">{receiver} TTF</span></span>
+          <span><span className="font-medium">Receiver balance:</span> <span className="font-mono text-[#00A88E]">{receiver} TTF</span></span>
         )}
       </div>
     </div>

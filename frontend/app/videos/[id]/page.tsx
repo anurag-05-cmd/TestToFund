@@ -48,20 +48,20 @@ export default function VideoPage({ params }: { params: { id: string } }) {
   return (
     <div className="max-w-3xl mx-auto p-6">
       <div className="mb-4">
-        <button onClick={() => history.back()} className="text-sm text-blue-600">← Back</button>
+        <button onClick={() => history.back()} className="text-sm text-[#00A88E] hover:text-[#00967D] transition-colors">← Back</button>
       </div>
-      {loading && <div>Loading...</div>}
+      {loading && <div className="text-gray-600">Loading...</div>}
       {!loading && video && (
         <div>
-          <h1 className="text-2xl font-semibold">{video.title}</h1>
-          <div className="text-sm text-gray-600 mb-4">Duration: {video.durationSec}s • Reward: {video.rewardAmount} TTF</div>
+          <h1 className="text-2xl font-semibold text-gray-900">{video.title}</h1>
+          <div className="text-sm text-gray-600 mb-4">Duration: {video.durationSec}s • <span className="text-[#00A88E] font-medium">Reward: {video.rewardAmount} TTF</span></div>
           <div className="space-y-3">
-            <div className="p-3 border rounded">
+            <div className="p-3 border border-gray-200 rounded-lg bg-gray-50">
               <p className="text-sm text-gray-700">Simulate watching this video and report progress to claim reward (anti-cheat applies).</p>
             </div>
-            <div className="flex gap-2">
-              <button onClick={simulateProgress} className="px-4 py-2 bg-blue-600 text-white rounded">Simulate progress</button>
-              <div className="text-sm text-gray-600">{status}</div>
+            <div className="flex gap-2 items-center">
+              <button onClick={simulateProgress} className="px-4 py-2 bg-[#00A88E] hover:bg-[#00967D] text-white rounded transition-colors">Simulate progress</button>
+              {status && <div className="text-sm text-gray-600 flex-1">{status}</div>}
             </div>
           </div>
         </div>
