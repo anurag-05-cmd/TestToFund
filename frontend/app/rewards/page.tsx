@@ -1,8 +1,12 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Wallet, Award, Upload, CheckCircle, Clock, ExternalLink, AlertCircle, TrendingUp } from 'lucide-react';
+import { Wallet, Award, Upload, CheckCircle, Clock, ExternalLink, AlertCircle, TrendingUp, RefreshCw } from 'lucide-react';
 import { connectWallet, formatAddress } from '../../src/lib/web3';
+import { checkTokenBalance } from '../../src/lib/tokenUtils';
 import BackgroundVideo from '../../src/components/BackgroundVideo';
+import NetworkStatus from '../../src/components/NetworkStatus';
+import NetworkSetupGuide from '../../src/components/NetworkSetupGuide';
+import WalletDetection from '../../src/components/WalletDetection';
 
 interface ClaimStatus {
   canClaim: boolean;
@@ -38,22 +42,75 @@ export default function RewardsPage() {
   const [claimHistory, setClaimHistory] = useState<ClaimHistory[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<SuccessMessage | null>(null);
+  const [tokenBalance, setTokenBalance] = useState<string>('0');
+  const [balanceLoading, setBalanceLoading] = useState(false);
+
+  // Check token balance
+  async function checkWalletBalance() {
+    if (!walletAddress) return;
+    
+    setBalanceLoading(true);
+    try {
+      const balance = await checkTokenBalance(walletAddress);
+      setTokenBalance(balance.balance);
+    } catch (err) {
+      console.error('Failed to check balance:', err);
+    } finally {
+      setBalanceLoading(false);
+    }
+  }
+
+  // Auto-refresh balance when wallet address changes
+  useEffect(() => {
+    if (walletAddress) {
+      checkWalletBalance();
+    }
+  }, [walletAddress]);
 
   // Connect wallet
   async function handleConnectWallet() {
     try {
       setError(null);
+      setLoading(true);
+      
+      console.log('🚀 Starting wallet connection process...');
       const result = await connectWallet();
+      
       setWalletAddress(result.address);
       setIsConnected(true);
       
-      // Load claim status and history after connecting
+      // Show success message with details
+      const messages = [];
+      if (result.networkSwitched) {
+        messages.push('✅ Connected to Primordial BlockDAG Testnet');
+      }
+      if (result.tokenAdded) {
+        messages.push('✅ TTF Token ready in your wallet');
+      }
+      
+      if (messages.length > 0) {
+        setSuccess({
+          message: `Wallet connected successfully! ${messages.join(', ')}`,
+          amount: '',
+          balance: ''
+        });
+        
+        // Clear success message after 4 seconds
+        setTimeout(() => setSuccess(null), 4000);
+      }
+      
+      // Load claim status, history, and token balance after connecting
       await Promise.all([
         checkClaimEligibility(result.address),
-        loadClaimHistory(result.address)
+        loadClaimHistory(result.address),
+        checkWalletBalance()
       ]);
+      
     } catch (err: any) {
-      setError(err?.message || 'Failed to connect wallet');
+      console.error('❌ Wallet connection failed:', err);
+      setError(err?.message || 'Failed to connect wallet. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -162,27 +219,46 @@ export default function RewardsPage() {
 
       const data = await res.json();
 
-      if (!res.ok) {
+      // Handle different response scenarios
+      if (res.ok) {
+        // Success case
+        setSuccess({
+          message: data.message || 'Successfully claimed 2000 TTF tokens!',
+          transactionHash: data.transactionHash,
+          explorerUrl: data.explorerUrl,
+          amount: data.amount,
+          balance: data.receiverBalance
+        });
+        
+        // Refresh claim status, history, and balance
+        await Promise.all([
+          checkClaimEligibility(walletAddress, certificateUrl),
+          loadClaimHistory(walletAddress),
+          checkWalletBalance()
+        ]);
+        
+        // Clear form
+        setCertificateUrl('');
+        
+      } else if (res.status === 202) {
+        // Transaction submitted but confirmation timeout
+        setSuccess({
+          message: 'Transaction submitted successfully! Please check your wallet balance.',
+          transactionHash: data.transactionHash,
+          explorerUrl: data.explorerUrl,
+          amount: data.amount || '2000',
+          balance: data.receiverBalance
+        });
+        
+        // Also show a warning
+        setTimeout(() => {
+          setError(`${data.error}\n\nNote: ${data.note || 'Check your wallet balance to confirm the transfer.'}`);
+        }, 100);
+        
+      } else {
+        // Error case
         throw new Error(data.error || 'Failed to claim rewards');
       }
-
-      // Set success with proper transaction info
-      setSuccess({
-        message: 'Successfully claimed 2000 TTF tokens!',
-        transactionHash: data.transactionHash,
-        explorerUrl: data.explorerUrl,
-        amount: data.amount,
-        balance: data.receiverBalance
-      });
-      
-      // Refresh claim status and history
-      await Promise.all([
-        checkClaimEligibility(walletAddress, certificateUrl),
-        loadClaimHistory(walletAddress)
-      ]);
-      
-      // Clear form
-      setCertificateUrl('');
       
     } catch (err: any) {
       console.error('Claim error:', err);
@@ -219,6 +295,9 @@ export default function RewardsPage() {
             </p>
           </div>
 
+          {/* Wallet Detection */}
+          <WalletDetection />
+
           {/* Wallet Connection */}
           <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 mb-8">
             <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
@@ -230,22 +309,93 @@ export default function RewardsPage() {
             <p className="text-gray-400 mb-6">Connect your wallet to start earning TTF tokens</p>
             <button 
               onClick={handleConnectWallet}
-              className="px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 transition-all duration-300 flex items-center gap-2 mx-auto"
+              disabled={loading}
+              className="px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2 mx-auto"
             >
-              <Wallet className="w-5 h-5" />
-              Connect Wallet
+              {loading ? (
+                <>
+                  <Clock className="w-5 h-5 animate-spin" />
+                  Connecting Wallet...
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-5 h-5" />
+                  Connect Wallet
+                </>
+              )}
             </button>
+            
+            {/* Network Information */}
+            <div className="mt-6 p-4 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-gray-300">
+              <h4 className="font-semibold mb-2 text-white">Network Requirements:</h4>
+              <div className="space-y-1 text-left">
+                <p><span className="text-gray-400">Network:</span> Primordial BlockDAG Testnet</p>
+                <p><span className="text-gray-400">Chain ID:</span> 1043</p>
+                <p><span className="text-gray-400">RPC URL:</span> https://rpc.primordial.bdagscan.com/</p>
+                <p><span className="text-gray-400">Currency:</span> BDAG</p>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">
+                🔄 The network and TTF token will be automatically added to your wallet
+              </p>
+            </div>
           </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <div className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-sm border border-green-800 flex items-center gap-1">
-              <CheckCircle className="w-4 h-4" />
-              Connected
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-sm border border-green-800 flex items-center gap-1">
+                <CheckCircle className="w-4 h-4" />
+                Connected
+              </div>
+              <span className="font-mono text-sm text-gray-300">{formatAddress(walletAddress)}</span>
             </div>
-            <span className="font-mono text-sm text-gray-300">{formatAddress(walletAddress)}</span>
+            
+            {/* Token Balance Display */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">Your TTF Balance</p>
+                  <p className="text-2xl font-bold text-white">
+                    {balanceLoading ? (
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 animate-spin" />
+                        Loading...
+                      </span>
+                    ) : (
+                      `${parseFloat(tokenBalance).toLocaleString()} TTF`
+                    )}
+                  </p>
+                </div>
+                <button
+                  onClick={checkWalletBalance}
+                  disabled={balanceLoading}
+                  className="p-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50"
+                  title="Refresh balance"
+                >
+                  <RefreshCw className={`w-5 h-5 ${balanceLoading ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Network Status */}
+      <NetworkStatus 
+        isConnected={isConnected} 
+        onNetworkChange={() => {
+          // Refresh data when network changes
+          if (walletAddress) {
+            Promise.all([
+              checkClaimEligibility(walletAddress),
+              loadClaimHistory(walletAddress),
+              checkWalletBalance()
+            ]);
+          }
+        }}
+      />
+
+      {/* Network Setup Guide */}
+      <NetworkSetupGuide />
 
       {/* Claim Section */}
       {isConnected && (
@@ -385,6 +535,16 @@ export default function RewardsPage() {
                 </a>
               </div>
             )}
+            <div className="text-sm text-green-400 mt-2 p-2 bg-green-900/20 rounded border border-green-800 flex items-center justify-between">
+              <span>💡 Tip: If you don't see the tokens immediately, please refresh your wallet or check the transaction on the explorer above.</span>
+              <button
+                onClick={checkWalletBalance}
+                className="ml-2 px-3 py-1 bg-green-800 hover:bg-green-700 rounded text-sm flex items-center gap-1 transition-colors"
+              >
+                <RefreshCw className="w-3 h-3" />
+                Refresh Balance
+              </button>
+            </div>
           </div>
         </div>
       )}

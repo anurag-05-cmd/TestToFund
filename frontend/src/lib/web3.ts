@@ -10,14 +10,15 @@ declare global {
 // --- Network Config ---
 export const NETWORK_CONFIG = {
   chainId: 1043,
-  chainName: "BlockDAG Testnet",
+  chainName: "Primordial BlockDAG Testnet",
   nativeCurrency: {
     name: "BDAG",
     symbol: "BDAG",
     decimals: 18
   },
-  rpcUrls: ["https://rpc.primordial.bdagscan.com"],
-  blockExplorerUrls: ["https://primordial.bdagscan.com/"]
+  rpcUrls: ["https://rpc.primordial.bdagscan.com/"],
+  blockExplorerUrls: ["https://primordial.bdagscan.com/"],
+  faucetUrls: ["https://primordial.bdagscan.com/faucet"]
 };
 
 export const NETWORK_NAME = NETWORK_CONFIG.chainName;
@@ -25,6 +26,55 @@ export const CHAIN_ID = NETWORK_CONFIG.chainId;
 export const RPC_URL = NETWORK_CONFIG.rpcUrls[0];
 export const EXPLORER_URL = NETWORK_CONFIG.blockExplorerUrls[0];
 export const TOKEN_ADDRESS = "0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317";
+
+// --- Cache Keys ---
+const CACHE_KEY_NETWORK_ADDED = `ttf_network_added_${CHAIN_ID}`;
+const CACHE_KEY_TOKEN_ADDED = `ttf_token_added_${TOKEN_ADDRESS}`;
+
+// --- Cache Management ---
+function hasNetworkBeenAdded(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(CACHE_KEY_NETWORK_ADDED) === 'true';
+}
+
+function markNetworkAsAdded(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(CACHE_KEY_NETWORK_ADDED, 'true');
+  }
+}
+
+function hasTokenBeenAdded(): boolean {
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(CACHE_KEY_TOKEN_ADDED) === 'true';
+}
+
+function markTokenAsAdded(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(CACHE_KEY_TOKEN_ADDED, 'true');
+  }
+}
+
+function clearWalletSetupCache(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(CACHE_KEY_NETWORK_ADDED);
+    localStorage.removeItem(CACHE_KEY_TOKEN_ADDED);
+    console.log('🗑️ Wallet setup cache cleared');
+  }
+}
+
+// Export the clear function for manual cache clearing if needed
+export { clearWalletSetupCache };
+
+// --- Debug function to check cache status ---
+export function getWalletSetupCacheStatus(): {
+  networkAdded: boolean;
+  tokenAdded: boolean;
+} {
+  return {
+    networkAdded: hasNetworkBeenAdded(),
+    tokenAdded: hasTokenBeenAdded()
+  };
+}
 
 // --- Token Config ---
 export const TOKEN_CONFIG = {
@@ -69,91 +119,221 @@ export async function getProvider(): Promise<ethers.BrowserProvider> {
   throw new Error("No wallet found. Please install MetaMask or use Trust Wallet.");
 }
 
+// --- Detect wallet type ---
+export function detectWalletType(): string {
+  if (typeof window === "undefined" || !window.ethereum) {
+    return 'none';
+  }
+  
+  if (window.ethereum.isMetaMask) {
+    return 'metamask';
+  }
+  
+  if (window.ethereum.isTrust) {
+    return 'trust';
+  }
+  
+  if (window.ethereum.isCoinbaseWallet) {
+    return 'coinbase';
+  }
+  
+  if (window.ethereum.isWalletConnect) {
+    return 'walletconnect';
+  }
+  
+  return 'unknown';
+}
+
+// --- Check if wallet supports programmatic network addition ---
+export function supportsNetworkSwitching(): boolean {
+  return typeof window !== "undefined" && 
+         window.ethereum && 
+         typeof window.ethereum.request === 'function';
+}
+
+// --- Get wallet installation status and recommendations ---
+export function getWalletRecommendations(): {
+  hasWallet: boolean;
+  walletType: string;
+  supportsAutoSetup: boolean;
+  installUrl?: string;
+} {
+  const walletType = detectWalletType();
+  const hasWallet = walletType !== 'none';
+  const supportsAutoSetup = supportsNetworkSwitching();
+  
+  let installUrl;
+  if (!hasWallet) {
+    installUrl = 'https://metamask.io/download/';
+  }
+  
+  return {
+    hasWallet,
+    walletType,
+    supportsAutoSetup,
+    installUrl
+  };
+}
+
 // --- Connect wallet and add BDAG Testnet ---
 export async function connectWallet(): Promise<{
   provider: ethers.BrowserProvider;
   address: string;
   isCorrectNetwork: boolean;
+  networkSwitched: boolean;
+  tokenAdded: boolean;
 }> {
   const provider = await getProvider();
   
   // Step 1: Request account access first
+  console.log('🔐 Requesting wallet access...');
   await provider.send("eth_requestAccounts", []);
   const signer = await provider.getSigner();
   const address = await signer.getAddress();
+  console.log('✅ Wallet connected:', formatAddress(address));
   
   // Step 2: Check current network
   const net = await provider.getNetwork();
   const currentChainId = Number(net.chainId);
   const isCorrectNetwork = currentChainId === CHAIN_ID;
+  let networkSwitched = false;
+  
+  console.log(`🌐 Current network: Chain ID ${currentChainId}`);
   
   // Step 3: Add/switch to BlockDAG Testnet if needed
   if (!isCorrectNetwork) {
-    console.log(`Currently on chain ${currentChainId}, switching to ${CHAIN_ID}`);
+    // Check if we've already added this network before
+    const networkAlreadyAdded = hasNetworkBeenAdded();
     
-    try {
-      await addBDAGNetwork();
-      console.log('BlockDAG Testnet added/switched successfully');
+    if (networkAlreadyAdded) {
+      console.log('🔄 Network was previously added, attempting silent switch...');
+      try {
+        // Try silent switch first since we know the network exists
+        await window.ethereum.request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: `0x${CHAIN_ID.toString(16)}` }],
+        });
+        console.log('✅ Silently switched to BlockDAG Testnet');
+        networkSwitched = true;
+      } catch (silentSwitchError: any) {
+        console.log('⚠️ Silent switch failed, falling back to full setup');
+        // Fall back to normal process if silent switch fails
+        await addBDAGNetwork();
+        networkSwitched = true;
+      }
+    } else {
+      console.log(`🔄 Switching from chain ${currentChainId} to ${CHAIN_ID} (${NETWORK_CONFIG.chainName})`);
       
-      // Wait a moment for network switch to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    } catch (error) {
-      console.error('Failed to add/switch to BlockDAG Testnet:', error);
-      throw new Error('Please manually add BlockDAG Testnet to your wallet and try again');
+      try {
+        await addBDAGNetwork();
+        networkSwitched = true;
+        markNetworkAsAdded(); // Cache that we've added this network
+        console.log('✅ BlockDAG Testnet added/switched successfully');
+      } catch (error: any) {
+        console.error('❌ Failed to add/switch to BlockDAG Testnet:', error);
+        if (error.code === 4001) {
+          throw new Error('Please approve the network switch to continue using the application.');
+        }
+        throw new Error('Failed to switch to BlockDAG Testnet. Please manually add the network and try again.');
+      }
     }
+    
+    // Wait longer for network switch to complete and verify
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    // Get a fresh provider instance after network switch
+    const newProvider = new ethers.BrowserProvider(window.ethereum);
+    const newNet = await newProvider.getNetwork();
+    const newChainId = Number(newNet.chainId);
+    
+    console.log(`🔍 Verification: New chain ID is ${newChainId}`);
+    
+    if (newChainId !== CHAIN_ID) {
+      console.warn(`⚠️ Network switch verification failed. Expected ${CHAIN_ID}, got ${newChainId}`);
+      // Don't throw error, but log the issue
+    }
+  } else {
+    console.log('✅ Already on the correct network');
+    // Even if on correct network, mark it as added for future reference
+    markNetworkAsAdded();
   }
   
-  // Step 4: Try to add TTF token to wallet (only if not already present)
-  try {
-    await addTTFToken();
-    console.log('TTF Token check/addition completed');
-  } catch (error) {
-    console.log('Failed to add TTF token (user may have declined or token already exists):', error);
-    // Don't throw error here as token addition is optional
+  // Step 4: Add TTF token to wallet (check cache first)
+  let tokenAdded = false;
+  
+  if (hasTokenBeenAdded()) {
+    console.log('✅ TTF Token was previously added (cached)');
+    tokenAdded = true; // Mark as added since we cached it
+  } else {
+    try {
+      console.log('🪙 Adding TTF token to wallet...');
+      await addTTFToken();
+      markTokenAsAdded(); // Cache successful token addition
+      tokenAdded = true;
+      console.log('✅ TTF Token addition completed and cached');
+    } catch (error: any) {
+      console.log('⚠️ TTF token addition failed or was declined by user:', error);
+      // Don't throw error here as token addition is optional
+      // User might have declined the request
+    }
   }
   
   return {
     provider,
     address,
-    isCorrectNetwork: true // We've ensured we're on the correct network
+    isCorrectNetwork: true, // We've ensured we're on the correct network
+    networkSwitched,
+    tokenAdded
   };
 }
 
 // --- Add BlockDAG Testnet to wallet ---
 export async function addBDAGNetwork(): Promise<void> {
+  console.log('🔍 addBDAGNetwork() called');
+  
   if (!window.ethereum) {
     throw new Error('MetaMask not found');
   }
 
+  const chainIdHex = `0x${CHAIN_ID.toString(16)}`;
+  console.log(`🌐 Target chain ID: ${CHAIN_ID} (${chainIdHex})`);
+
   try {
+    console.log('🔄 Attempting to switch to existing network...');
     // First try to switch to the network
     await window.ethereum.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: `0x${CHAIN_ID.toString(16)}` }],
+      params: [{ chainId: chainIdHex }],
     });
+    console.log('✅ Successfully switched to existing network');
   } catch (switchError: any) {
+    console.log('⚠️ Switch failed:', switchError.code, switchError.message);
+    
     // If network doesn't exist (error 4902), add it
     if (switchError.code === 4902) {
+      console.log('➕ Network does not exist, adding it...');
       try {
         await window.ethereum.request({
           method: 'wallet_addEthereumChain',
           params: [{
-            chainId: `0x${CHAIN_ID.toString(16)}`,
+            chainId: chainIdHex,
             chainName: NETWORK_CONFIG.chainName,
             nativeCurrency: NETWORK_CONFIG.nativeCurrency,
             rpcUrls: NETWORK_CONFIG.rpcUrls,
             blockExplorerUrls: NETWORK_CONFIG.blockExplorerUrls,
           }],
         });
+        console.log('✅ Successfully added and switched to network');
       } catch (addError: any) {
-        console.error('Failed to add network:', addError);
+        console.error('❌ Failed to add network:', addError);
         throw new Error('Failed to add BlockDAG Testnet. Please add it manually.');
       }
     } else if (switchError.code === 4001) {
       // User rejected the request
+      console.error('❌ User rejected network switch');
       throw new Error('Please approve the network switch to continue.');
     } else {
-      console.error('Network switch error:', switchError);
+      console.error('❌ Unexpected network switch error:', switchError);
       throw switchError;
     }
   }
@@ -193,30 +373,46 @@ export async function isTokenInWallet(): Promise<boolean> {
 }
 
 // --- Add TTF Token to wallet ---
-export async function addTTFToken(): Promise<void> {
+export async function addTTFToken(): Promise<boolean> {
+  console.log('🔍 addTTFToken() called');
+  
   if (!window.ethereum) {
+    console.error('❌ No window.ethereum found');
     throw new Error('MetaMask not found');
   }
 
-  // Check if token already exists
-  const tokenExists = await isTokenInWallet();
-  if (tokenExists) {
-    console.log('TTF Token already exists in wallet');
-    return;
-  }
-
-  await window.ethereum.request({
-    method: 'wallet_watchAsset',
-    params: {
-      type: 'ERC20',
-      options: {
-        address: TOKEN_CONFIG.address,
-        symbol: TOKEN_CONFIG.symbol,
-        decimals: TOKEN_CONFIG.decimals,
-        image: '', // Optional: You can add a token logo URL here
-      },
-    },
+  console.log('📋 Requesting to add token:', {
+    address: TOKEN_CONFIG.address,
+    symbol: TOKEN_CONFIG.symbol,
+    decimals: TOKEN_CONFIG.decimals
   });
+
+  try {
+    const result = await window.ethereum.request({
+      method: 'wallet_watchAsset',
+      params: {
+        type: 'ERC20',
+        options: {
+          address: TOKEN_CONFIG.address,
+          symbol: TOKEN_CONFIG.symbol,
+          decimals: TOKEN_CONFIG.decimals,
+          image: '', // Optional: You can add a token logo URL here
+        },
+      },
+    });
+    
+    console.log('🪙 Token addition result:', result);
+    
+    // If user approved, mark as added
+    if (result === true) {
+      markTokenAsAdded();
+    }
+    
+    return result;
+  } catch (error: any) {
+    console.error('❌ Token addition error:', error);
+    throw error;
+  }
 }
 
 // --- Check if user is on correct network ---
