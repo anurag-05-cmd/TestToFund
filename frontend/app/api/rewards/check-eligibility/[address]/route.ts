@@ -21,6 +21,8 @@ export async function GET(
                    url.searchParams.get('certificateUrl') ||
                    url.searchParams.get('url');
 
+    console.log('Raw udemyLink:', udemyLink); // Debug log
+
     if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
       return NextResponse.json(
         { error: 'Invalid Ethereum address' },
@@ -48,50 +50,74 @@ export async function GET(
     udemyLink = udemyLink.replace(/^["']|["']$/g, '');
     udemyLink = udemyLink.replace(/\\/g, '');
 
-    // Multiple validation patterns - from most specific to most general
+    console.log('Cleaned udemyLink:', udemyLink); // Debug log
+
+    // Test your specific URL
+    const testUrl = 'https://www.udemy.com/certificate/UC-d22f574a-f126-4131-96f9-20cfe4e7cc14/';
+    console.log('Test URL matches your link:', udemyLink === testUrl);
+
+    // Enhanced validation patterns - specifically for your URL format
     const patterns = [
-      // Exact pattern for your URL format
-      /^https:\/\/www\.udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      // Your exact format: UC- followed by UUID-like pattern
+      /^https:\/\/www\.udemy\.com\/certificate\/UC-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/?$/,
       // With or without www
-      /^https:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      /^https:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/?$/,
       // HTTP or HTTPS
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\/?$/,
+      // Mixed case hex
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}\/?$/,
+      // Original broader patterns
+      /^https:\/\/www\.udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      /^https:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
       /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
-      // More flexible character set
       /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[\w\-]+\/?$/,
-      // Very flexible - just check structure
       /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-.+\/?$/,
-      // Even more flexible
       /udemy\.com\/certificate\/UC-/,
-      // Last resort - just check if it contains the basic structure
       /certificate\/UC-/
     ];
 
     let isValid = false;
-    for (const pattern of patterns) {
-      if (pattern.test(udemyLink)) {
+    let matchedPattern = -1;
+    
+    for (let i = 0; i < patterns.length; i++) {
+      if (patterns[i].test(udemyLink)) {
         isValid = true;
+        matchedPattern = i;
         break;
       }
     }
 
+    console.log('Pattern matched:', matchedPattern, 'isValid:', isValid); // Debug log
+
     // If still not valid, try case insensitive
     if (!isValid) {
       const caseInsensitivePattern = /certificate\/uc-/i;
-      isValid = caseInsensitivePattern.test(udemyLink);
-    }
-
-    if (!isValid) {
-      // Return success anyway if it looks like a Udemy URL
-      if (udemyLink.includes('udemy.com') && udemyLink.includes('certificate')) {
+      if (caseInsensitivePattern.test(udemyLink)) {
         isValid = true;
+        matchedPattern = 'case-insensitive';
       }
     }
+
+    // Fallback validation
+    if (!isValid) {
+      if (udemyLink.includes('udemy.com') && udemyLink.includes('certificate')) {
+        isValid = true;
+        matchedPattern = 'fallback';
+      }
+    }
+
+    console.log('Final validation result:', isValid, 'Pattern:', matchedPattern); // Debug log
 
     if (!isValid) {
       return NextResponse.json({
         canClaim: false,
         alreadyClaimed: false,
-        reason: 'Invalid Udemy certificate link format. Please ensure it is a valid Udemy certificate URL.'
+        reason: 'Invalid Udemy certificate link format. Please ensure it is a valid Udemy certificate URL.',
+        debug: {
+          receivedUrl: udemyLink,
+          testUrl: testUrl,
+          matches: udemyLink === testUrl
+        }
       });
     }
 
@@ -123,7 +149,12 @@ export async function GET(
       canClaim: !alreadyClaimed,
       alreadyClaimed,
       reason: alreadyClaimed ? 'Already claimed rewards' : undefined,
-      udemyLinkValid: true
+      udemyLinkValid: true,
+      debug: {
+        receivedUrl: udemyLink,
+        normalizedUrl: normalizedUdemyLink,
+        matchedPattern: matchedPattern
+      }
     });
 
   } catch (error: any) {
