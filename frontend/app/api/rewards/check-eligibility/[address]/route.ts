@@ -34,7 +34,7 @@ export async function GET(
     }
 
     // Validate Udemy link format
-    const udemyLinkPattern = /^https:\/\/(www\.)?udemy\.com\/certificate\/.+/;
+    const udemyLinkPattern = /^https?:\/\/(?:ude\.my\/UC-[a-zA-Z0-9_-]{6,}|udemy\.com\/UC-[a-zA-Z0-9_-]{10,})$/;
     if (!udemyLinkPattern.test(udemyLink)) {
       return NextResponse.json({
         canClaim: false,

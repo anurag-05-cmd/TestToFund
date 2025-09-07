@@ -2,6 +2,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '../src/components/Header';
+import Footer from '../src/components/Footer';
 import { WalletProvider } from '../src/contexts/WalletContext';
 
 export default function LayoutClient({
@@ -20,8 +21,13 @@ export default function LayoutClient({
 
   return (
     <WalletProvider>
-      {!isWelcomePage && <Header />}
-      <main className={isFullWidthPage ? "" : "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8"}>{children}</main>
+      <div className="min-h-screen flex flex-col">
+        {!isWelcomePage && <Header />}
+        <main className={`flex-1 ${isFullWidthPage ? "" : "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8"}`}>
+          {children}
+        </main>
+        {!isWelcomePage && <Footer />}
+      </div>
     </WalletProvider>
   );
 }
