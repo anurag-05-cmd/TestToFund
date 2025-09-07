@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     // Validate Udemy link format on backend (security measure)
     if (certificateUrl) {
-      const udemyLinkPattern = /^https:\/\/(www\.)?udemy\.com\/certificate\/[a-zA-Z0-9]+\/?$/;
+      const udemyLinkPattern = /^https?:\/\/(?:ude\.my\/UC-[\w-]{6,}|(?:www\.)?udemy\.com\/certificate\/UC-[\w-]{10,})$/;
       if (!udemyLinkPattern.test(certificateUrl)) {
         console.log('Invalid Udemy certificate URL format:', certificateUrl);
         return NextResponse.json(
