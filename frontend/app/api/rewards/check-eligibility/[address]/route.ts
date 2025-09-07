@@ -36,17 +36,10 @@ export async function GET(
       });
     }
 
-    // Multiple cleaning attempts
-    udemyLink = udemyLink.trim();
-    try {
-      udemyLink = decodeURIComponent(udemyLink);
-    } catch (e) {
-      // If decoding fails, use original
+    // Only remove trailing slash if present
+    if (udemyLink.endsWith('/')) {
+      udemyLink = udemyLink.slice(0, -1);
     }
-    
-    // Remove any extra quotes or escaping
-    udemyLink = udemyLink.replace(/^["']|["']$/g, '');
-    udemyLink = udemyLink.replace(/\\/g, '');
 
     // Multiple validation patterns - from most specific to most general
     const patterns = [
