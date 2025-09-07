@@ -1,300 +1,322 @@
-# Skill-to-Earn Microgrants Project Structure
+# TestToFund - Test Trust Fund
 
-## Project Root Structure
+**Transform your knowledge into rewards. Complete educational courses, validate your learning, and earn TTF tokens.**
+
+🌐 **Live Demo**: [ttf.expose.software](https://ttf.expose.software)
+
+![TestToFund Logo](frontend/public/TestToFund%20Logo.svg)
+
+## 🎯 Project Overview
+
+TestToFund is a comprehensive Test Trust Fund platform that rewards users with TTF (Test To Fund) tokens for completing educational courses and validating their knowledge. Built on the BlockDAG Testnet, it provides a seamless integration between education and blockchain rewards.
+
+### 🌟 Key Features
+
+- **📚 Course Completion Rewards**: Earn 2000 TTF tokens for each completed course
+- **🔐 Automatic Wallet Setup**: Seamless BlockDAG testnet integration with MetaMask
+- **🏆 Certificate Validation**: Upload Udemy certificates to claim rewards
+- **💰 Real-time Token Balance**: Live TTF token balance tracking
+- **🔄 Instant Token Distribution**: Automated token distribution upon verification
+- **📱 Responsive Design**: Works seamlessly across all devices
+
+## 🏗️ Project Structure
+
 ```
-skill-to-earn-platform/
+TestToFund/
 ├── README.md
-├── .gitignore
-├── package.json
-├── .env.example
-├── docker-compose.yml
-├── contracts/
-│   ├── hardhat.config.js
+├── frontend/                 # Next.js 15.5.2 Frontend Application
 │   ├── package.json
-│   ├── .env.example
-│   ├── scripts/
-│   │   ├── deploy.js
-│   │   ├── verify.js
-│   │   └── populate-pool.js
-│   ├── contracts/
-│   │   ├── SkillToEarnPool.sol
-│   │   ├── BDAGToken.sol
-│   │   └── interfaces/
-│   │       └── ISkillToEarnPool.sol
-│   ├── test/
-│   │   ├── SkillToEarnPool.test.js
-│   │   └── helpers/
-│   │       └── testHelpers.js
-│   └── artifacts/
-├── backend/
-│   ├── package.json
-│   ├── .env.example
-│   ├── server.js
-│   ├── config/
-│   │   ├── database.js
-│   │   ├── blockchain.js
-│   │   └── redis.js
-│   ├── models/
-│   │   ├── User.js
-│   │   ├── Progress.js
-│   │   ├── Video.js
-│   │   ├── Question.js
-│   │   └── Transaction.js
-│   ├── controllers/
-│   │   ├── authController.js
-│   │   ├── videoController.js
-│   │   ├── quizController.js
-│   │   ├── githubController.js
-│   │   ├── rewardController.js
-│   │   └── adminController.js
-│   ├── middleware/
-│   │   ├── auth.js
-│   │   ├── rateLimiter.js
-│   │   ├── videoMonitoring.js
-│   │   ├── antiCheat.js
-│   │   └── validation.js
-│   ├── routes/
-│   │   ├── auth.js
-│   │   ├── videos.js
-│   │   ├── quiz.js
-│   │   ├── github.js
-│   │   ├── rewards.js
-│   │   └── admin.js
-│   ├── services/
-│   │   ├── blockchainService.js
-│   │   ├── githubService.js
-│   │   ├── emailService.js
-│   │   ├── videoService.js
-│   │   └── antiCheatService.js
-│   ├── utils/
-│   │   ├── logger.js
-│   │   ├── encryption.js
-│   │   ├── validation.js
-│   │   └── constants.js
-│   ├── database/
-│   │   ├── migrations/
-│   │   │   ├── 001_create_users.sql
-│   │   │   ├── 002_create_progress.sql
-│   │   │   ├── 003_create_videos.sql
-│   │   │   ├── 004_create_questions.sql
-│   │   │   └── 005_create_transactions.sql
-│   │   └── seeds/
-│   │       ├── videos.sql
-│   │       └── questions.sql
-│   └── tests/
-│       ├── unit/
-│       │   ├── controllers/
-│       │   ├── services/
-│       │   └── utils/
-│       └── integration/
-│           ├── auth.test.js
-│           ├── video.test.js
-│           └── rewards.test.js
-├── frontend/
-│   ├── package.json
-│   ├── .env.example
-│   ├── next.config.js
+│   ├── next.config.ts
 │   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   ├── tsconfig.json
-│   ├── public/
-│   │   ├── favicon.ico
-│   │   ├── logo.svg
-│   │   ├── images/
-│   │   │   ├── hero-bg.jpg
-│   │   │   ├── feature-icons/
-│   │   │   └── testimonials/
-│   │   └── videos/
-│   │       ├── course-1.mp4
-│   │       ├── course-2.mp4
-│   │       └── course-3.mp4
+│   ├── app/                  # App Router Pages
+│   │   ├── page.tsx          # Landing page with animated background
+│   │   ├── home/             # Course catalog and featured content
+│   │   ├── rewards/          # Main rewards claiming interface
+│   │   ├── faucet/           # Token transfer functionality
+│   │   ├── videos/           # Video learning modules
+│   │   ├── welcome/          # Welcome page with wallet connect
+│   │   └── api/              # API routes for rewards claiming
 │   ├── src/
-│   │   ├── components/
-│   │   │   ├── common/
-│   │   │   │   ├── Header.tsx
-│   │   │   │   ├── Footer.tsx
-│   │   │   │   ├── Layout.tsx
-│   │   │   │   ├── LoadingSpinner.tsx
-│   │   │   │   ├── Modal.tsx
-│   │   │   │   └── Toast.tsx
-│   │   │   ├── web3/
-│   │   │   │   ├── WalletConnect.tsx
-│   │   │   │   ├── NetworkSwitcher.tsx
-│   │   │   │   ├── TokenBalance.tsx
-│   │   │   │   └── TransactionStatus.tsx
-│   │   │   ├── video/
-│   │   │   │   ├── SecureVideoPlayer.tsx
-│   │   │   │   ├── VideoProgress.tsx
-│   │   │   │   ├── AntiCheatOverlay.tsx
-│   │   │   │   └── VideoControls.tsx
-│   │   │   ├── quiz/
-│   │   │   │   ├── QuizContainer.tsx
-│   │   │   │   ├── QuestionCard.tsx
-│   │   │   │   ├── ScoreDisplay.tsx
-│   │   │   │   └── QuizTimer.tsx
-│   │   │   ├── github/
-│   │   │   │   ├── GitHubSubmission.tsx
-│   │   │   │   ├── RepoInstructions.tsx
-│   │   │   │   └── ProjectValidation.tsx
-│   │   │   ├── dashboard/
-│   │   │   │   ├── DashboardOverview.tsx
-│   │   │   │   ├── ProgressTracker.tsx
-│   │   │   │   ├── RewardHistory.tsx
-│   │   │   │   └── ProfileStats.tsx
-│   │   │   └── home/
-│   │   │       ├── HeroSection.tsx
-│   │   │       ├── FeaturesSection.tsx
-│   │   │       ├── HowItWorks.tsx
-│   │   │       ├── Testimonials.tsx
-│   │   │       └── CallToAction.tsx
-│   │   ├── pages/
-│   │   │   ├── index.tsx
-│   │   │   ├── dashboard.tsx
-│   │   │   ├── learn/
-│   │   │   │   ├── video/[id].tsx
-│   │   │   │   └── quiz/[id].tsx
-│   │   │   ├── github-submission.tsx
-│   │   │   ├── profile.tsx
-│   │   │   ├── rewards.tsx
-│   │   │   └── _app.tsx
-│   │   ├── hooks/
-│   │   │   ├── useWeb3.ts
-│   │   │   ├── useAuth.ts
-│   │   │   ├── useProgress.ts
-│   │   │   ├── useRewards.ts
-│   │   │   ├── useVideoPlayer.ts
-│   │   │   └── useAntiCheat.ts
-│   │   ├── context/
-│   │   │   ├── Web3Context.tsx
-│   │   │   ├── AuthContext.tsx
-│   │   │   ├── ProgressContext.tsx
-│   │   │   └── ThemeContext.tsx
-│   │   ├── services/
-│   │   │   ├── api.ts
-│   │   │   ├── blockchain.ts
-│   │   │   ├── video.ts
-│   │   │   ├── quiz.ts
-│   │   │   └── github.ts
-│   │   ├── utils/
-│   │   │   ├── constants.ts
-│   │   │   ├── helpers.ts
-│   │   │   ├── validation.ts
-│   │   │   ├── formatters.ts
-│   │   │   └── antiCheat.ts
-│   │   ├── types/
-│   │   │   ├── user.ts
-│   │   │   ├── video.ts
-│   │   │   ├── quiz.ts
-│   │   │   ├── blockchain.ts
-│   │   │   └── api.ts
-│   │   └── styles/
-│   │       ├── globals.css
-│   │       ├── components.css
-│   │       └── animations.css
-│   └── tests/
-│       ├── components/
-│       ├── pages/
-│       ├── hooks/
-│       └── utils/
-├── shared/
-│   ├── types/
-│   │   ├── common.ts
-│   │   ├── blockchain.ts
-│   │   └── api.ts
-│   ├── constants/
-│   │   ├── blockchain.ts
-│   │   ├── api.ts
-│   │   └── messages.ts
-│   └── utils/
-│       ├── validation.ts
-│       └── formatters.ts
-├── docs/
-│   ├── API.md
-│   ├── DEPLOYMENT.md
-│   ├── SMART_CONTRACTS.md
-│   ├── SECURITY.md
-│   ├── TESTING.md
-│   └── USER_GUIDE.md
-├── scripts/
-│   ├── setup.sh
-│   ├── deploy-contracts.sh
-│   ├── seed-database.sh
-│   └── build-production.sh
-└── monitoring/
-    ├── docker/
-    │   ├── prometheus/
-    │   │   └── prometheus.yml
-    │   └── grafana/
-    │       └── dashboards/
-    ├── alerts/
-    │   └── rules.yml
-    └── logs/
-        └── .gitkeep
+│   │   ├── components/       # Reusable UI components
+│   │   │   ├── BackgroundVideo.tsx
+│   │   │   ├── NetworkStatus.tsx
+│   │   │   ├── NetworkSetupGuide.tsx
+│   │   │   ├── WalletDetection.tsx
+│   │   │   └── SendTokensResult.tsx
+│   │   ├── contexts/         # React contexts for state management
+│   │   └── lib/              # Utility libraries
+│   │       ├── web3.ts       # Web3 wallet integration
+│   │       └── tokenUtils.ts # Token balance and verification
+│   └── public/               # Static assets
+│       ├── TestToFund Logo.svg
+│       ├── bg-video.mp4      # Background video
+│       └── TestToFund Background Text.png
+├── backend/                  # Express.js Backend API
+│   ├── package.json
+│   ├── server.js            # Main server entry point
+│   ├── config/              # Database and service configurations
+│   │   ├── database.js
+│   │   └── mongo.js
+│   ├── controllers/         # API endpoint controllers
+│   │   ├── authController.js
+│   │   ├── rewardController.js
+│   │   └── videoController.js
+│   ├── models/              # Database models
+│   │   ├── User.js          # User wallet and progress tracking
+│   │   ├── Video.js         # Video course metadata
+│   │   ├── Transaction.js   # Token distribution records
+│   │   └── Progress.js      # Learning progress tracking
+│   ├── services/            # Business logic services
+│   │   ├── blockchainService.js    # Token distribution logic
+│   │   ├── rewardService.js        # Reward calculation and issuing
+│   │   └── antiCheatService.js     # Anti-fraud detection
+│   ├── routes/              # API route definitions
+│   │   ├── auth.js
+│   │   ├── rewards.js
+│   │   ├── videos.js
+│   │   └── admin.js
+│   ├── middleware/          # Express middleware
+│   │   ├── errorHandler.js
+│   │   └── validate.js
+│   └── tests/               # Test suites
+│       ├── unit/
+│       └── integration/
+└── contracts/               # Smart Contracts (Hardhat)
+    ├── package.json
+    ├── hardhat.config.js    # BlockDAG testnet configuration
+    ├── deployed.env         # Deployed contract addresses
+    ├── contracts/           # Solidity smart contracts
+    │   ├── TestToFund.sol   # TTF ERC20 token contract
+    │   ├── TokenDistributor.sol     # Token distribution contract
+    │   └── CertificateNFT.sol       # NFT certificates (future feature)
+    ├── scripts/             # Deployment and utility scripts
+    │   ├── deploy.js
+    │   ├── sendTokens.js    # Token distribution testing
+    │   └── verify.js
+    └── artifacts/           # Compiled contract artifacts
 ```
 
-## Key File Descriptions
+## 🚀 Technology Stack
 
-### Smart Contracts (`/contracts/`)
-- **SkillToEarnPool.sol**: Main contract managing token pool and rewards distribution
-- **BDAGToken.sol**: BDAG token implementation (if needed for testing)
-- **ISkillToEarnPool.sol**: Interface for the main contract
-- **deploy.js**: Deployment script for BlockDAG testnet
-- **verify.js**: Contract verification script
+### Frontend
+- **Framework**: Next.js 15.5.2 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4.0
+- **Web3**: Ethers.js v6.13.0
+- **UI Components**: Lucide React, Framer Motion
+- **Bundler**: Turbopack (Next.js built-in)
 
-### Backend (`/backend/`)
-- **server.js**: Express.js server entry point
-- **authController.js**: Wallet authentication and user management
-- **videoController.js**: Video streaming and progress tracking
-- **quizController.js**: MCQ management and scoring
-- **githubController.js**: GitHub integration and project validation
-- **rewardController.js**: Token reward distribution logic
-- **antiCheat.js**: Anti-cheat detection and monitoring
-- **blockchainService.js**: Web3 interactions with BlockDAG network
+### Backend
+- **Runtime**: Node.js with Express.js
+- **Database**: MongoDB with Mongoose
+- **Authentication**: JWT with wallet-based auth
+- **Blockchain**: Ethers.js v5.7.2
+- **Testing**: Jest with Supertest
 
-### Frontend (`/frontend/`)
-- **SecureVideoPlayer.tsx**: Custom video player with anti-cheat features
-- **WalletConnect.tsx**: Web3 wallet connection component
-- **QuizContainer.tsx**: Interactive quiz interface
-- **GitHubSubmission.tsx**: GitHub project submission form
-- **DashboardOverview.tsx**: Main user dashboard
-- **HeroSection.tsx**: Landing page hero section
-- **useAntiCheat.ts**: Hook for monitoring user behavior
-
-### Security Features
-- **videoMonitoring.js**: Backend middleware for video behavior tracking
-- **AntiCheatOverlay.tsx**: Frontend component preventing dev tools
-- **antiCheatService.js**: Service for detecting suspicious activities
-- **rateLimiter.js**: API rate limiting middleware
-
-### Database Schema
-- **Users**: Wallet addresses, progress, suspension status
-- **Progress**: Video completion, quiz scores, GitHub submissions
-- **Videos**: Course content metadata
-- **Questions**: MCQ questions and correct answers
-- **Transactions**: Reward distribution records
-
-### Configuration Files
-- **hardhat.config.js**: Hardhat configuration for BlockDAG testnet
-- **next.config.js**: Next.js configuration
-- **tailwind.config.js**: Dark theme Tailwind CSS configuration
-- **docker-compose.yml**: Development environment setup
-
-### Monitoring & Testing
-- **Prometheus/Grafana**: Application monitoring
-- **Unit/Integration tests**: Comprehensive test coverage
-- **API documentation**: Complete API reference
-- **Security documentation**: Security best practices guide
-
-## Blockchain Integration Points
-- **RPC URL**: rpc.primordial.bdagscan.com
-- **Token Pool**: 1,000,000 BDAG tokens
-- **Reward Amount**: 2000 BDAG per completion
+### Smart Contracts
+- **Framework**: Hardhat 2.17.0
+- **Language**: Solidity ^0.8.19
+- **Libraries**: OpenZeppelin Contracts 4.9.3
 - **Network**: BlockDAG Testnet (EVM Compatible)
-- **Contract Events**: All transactions logged on-chain
 
-## Anti-Cheat Mechanisms
-- **Video Monitoring**: Detects skipping, dev tools, tab switching
-- **Progress Validation**: Server-side verification of completion
-- **Account Suspension**: Automatic suspension for violations
-- **Quiz Integrity**: Randomized questions, time limits
-- **GitHub Verification**: Repository and commit validation
+### Blockchain Integration
+- **Network**: Primordial BlockDAG Testnet
+- **Chain ID**: 1043
+- **RPC URL**: https://rpc.primordial.bdagscan.com/
+- **Explorer**: https://primordial.bdagscan.com/
+- **Currency**: BDAG
+- **TTF Token Contract**: `0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317`
+
+## 🛠️ Setup & Installation
+
+### Prerequisites
+- Node.js 18+ 
+- pnpm (recommended) or npm
+- MetaMask or compatible Web3 wallet
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/anurag-05-cmd/TestToFund.git
+cd TestToFund
+```
+
+### 2. Frontend Setup
+```bash
+cd frontend
+pnpm install
+cp .env.example .env.local
+
+# Add your environment variables to .env.local
+# PRIVATE_KEY=your_distribution_wallet_private_key
+# TOKEN_ADDRESS=0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317
+# RPC_URL=https://rpc.primordial.bdagscan.com/
+
+pnpm dev
+```
+
+### 3. Backend Setup
+```bash
+cd backend
+pnpm install
+cp .env.example .env
+
+# Configure your .env file with MongoDB and blockchain settings
+
+pnpm dev
+```
+
+### 4. Smart Contracts Setup
+```bash
+cd contracts
+pnpm install
+
+# Deploy contracts (optional - already deployed)
+pnpm deploy:testnet
+```
+
+## 💰 Token Economics
+
+- **Token Name**: Test To Fund (TTF)
+- **Token Symbol**: TTF
+- **Decimals**: 18
+- **Reward per Course**: 2000 TTF
+- **Network**: BlockDAG Testnet
+- **Contract Address**: `0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317`
+
+## 🎓 How It Works
+
+### For Learners:
+1. **Connect Wallet**: Connect your MetaMask to BlockDAG testnet (automatic setup)
+2. **Browse Courses**: Explore 20+ featured Udemy courses
+3. **Complete Learning**: Finish courses and obtain certificates
+4. **Upload Certificate**: Submit your Udemy certificate on the rewards page
+5. **Claim Rewards**: Receive 2000 TTF tokens instantly to your wallet
+
+### For Course Providers:
+1. **Course Integration**: Submit course details for platform inclusion
+2. **Verification System**: Automated certificate validation
+3. **Reward Distribution**: Automatic token distribution upon verification
+
+## 🔐 Security Features
+
+### Anti-Cheat System
+- **Certificate Verification**: Real-time Udemy certificate validation
+- **One-time Claims**: Each wallet can only claim once per course
+- **Fraud Detection**: Advanced anti-cheat algorithms
+- **Transaction Logging**: All claims logged on-chain for transparency
+
+### Wallet Security
+- **Non-custodial**: Users maintain full control of their wallets
+- **Automatic Network Setup**: Seamless BlockDAG testnet configuration
+- **localStorage Caching**: Prevents repetitive wallet setup prompts
+- **Secure Token Distribution**: Direct transfers from distribution wallet
+
+## 📊 Course Catalog
+
+The platform features 20+ carefully curated free Udemy courses across multiple categories:
+
+### 🐍 Python Programming
+- Python for Beginners
+- Introduction to Python Programming  
+- Python from Beginner to Intermediate
+
+### 🧪 Software Testing
+- Introduction to Software Testing
+- Software Testing Simple (QA)
+- Free Software Testing Tutorial
+
+### 📚 Additional Categories
+- Essential Tech Skills
+- Productivity & Professional Skills
+- Online Business Fundamentals
+
+*Each completed course rewards 2000 TTF tokens upon certificate verification.*
+
+## 🔗 API Endpoints
+
+### Rewards API
+- `POST /api/rewards/claim` - Claim rewards with certificate
+- `GET /api/rewards/history` - Get claim history
+- `GET /api/rewards/status` - Check claim eligibility
+
+### User Management
+- `POST /api/auth/connect` - Connect wallet
+- `GET /api/auth/profile` - Get user profile
+- `POST /api/auth/disconnect` - Disconnect wallet
+
+### Video System
+- `GET /api/videos` - List available videos
+- `GET /api/videos/:id` - Get video details
+- `POST /api/videos/:id/progress` - Track progress
+
+## 🧪 Testing
+
+### Frontend Testing
+```bash
+cd frontend
+pnpm test
+```
+
+### Backend Testing
+```bash
+cd backend
+pnpm test
+```
+
+### Smart Contract Testing
+```bash
+cd contracts
+pnpm test
+```
+
+## 🚀 Deployment
+
+### Frontend (Vercel/Netlify)
+```bash
+cd frontend
+pnpm build
+pnpm start
+```
+
+### Backend (Railway/Heroku)
+```bash
+cd backend
+pnpm start
+```
+
+### Smart Contracts
+```bash
+cd contracts
+pnpm deploy:testnet
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🛟 Support
+
+- **Documentation**: Check the `/docs` folder for detailed guides
+- **Issues**: Report bugs via GitHub Issues
+- **Discord**: Join our community Discord server
+- **Email**: contact@testtofund.com
+
+## 🙏 Acknowledgments
+
+- **BlockDAG Team**: For providing the testnet infrastructure
+- **Udemy**: For the educational content integration
+- **OpenZeppelin**: For secure smart contract libraries
+- **Next.js Team**: For the amazing framework
+- **Ethers.js**: For Web3 integration
+
+---
+
+**Built with ❤️ for the future of education and blockchain adoption.**
