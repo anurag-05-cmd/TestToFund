@@ -847,6 +847,37 @@
       "artifacts": [
         "TestToFund"
       ]
+    },
+    "C:\\Users\\somam\\OneDrive\\Desktop\\work\\LearnNEarn\\contracts\\contracts\\BDAGToken.sol": {
+      "lastModificationDate": 1757183272872,
+      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "sourceName": "contracts/BDAGToken.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [],
+      "artifacts": []
     }
   }
 }

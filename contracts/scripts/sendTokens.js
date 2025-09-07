@@ -1,104 +1,79 @@
-require('dotenv').config();
-const ethers = require('ethers');
+require("dotenv").config();
+const { ethers } = require("hardhat");
 
 async function main() {
-  const RPC_URL = process.env.RPC_URL;
-  const PRIVATE_KEY = process.env.PRIVATE_KEY;
-  const TOKEN_ADDRESS = process.env.TOKEN_ADDRESS;
+  const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
+  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
 
-  if (!RPC_URL || !TOKEN_ADDRESS) {
-    console.error('RPC_URL and TOKEN_ADDRESS must be set in contracts/.env');
-    process.exit(1);
-  }
+  const tokenAddress = process.env.TOKEN_ADDRESS;
 
-  // CLI args: node sendTokens.js <to> <amount> [--confirm]
-  const argv = process.argv.slice(2);
-  const to = argv[0] || process.env.TO_ADDRESS;
-  const amountInput = argv[1] || process.env.AMOUNT || '0';
-  const confirm = argv.includes('--confirm') || process.env.CONFIRM === '1';
-
-  if (!to) {
-    console.error('Missing recipient address. Usage: node sendTokens.js <to> <amount> [--confirm]');
-    process.exit(1);
-  }
-
-  const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-
-  let wallet;
-  if (PRIVATE_KEY) {
-    wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-  }
-
+  // ERC20 ABI (only needed parts)
   const erc20ABI = [
-    'function name() view returns (string)',
-    'function symbol() view returns (string)',
-    'function decimals() view returns (uint8)',
-    'function balanceOf(address owner) view returns (uint256)',
-    'function transfer(address to, uint256 value) returns (bool)'
+    "function balanceOf(address owner) view returns (uint256)",
+    "function transfer(address to, uint256 value) returns (bool)"
   ];
 
-  const signerOrProvider = wallet || provider;
-  const token = new ethers.Contract(TOKEN_ADDRESS, erc20ABI, signerOrProvider);
+  const token = new ethers.Contract(tokenAddress, erc20ABI, wallet);
+
+  // Receiver BDAG testnet wallet - make this configurable via env var TO or CLI arg
+  const to = process.env.TO || process.argv[2];
+  if (!to || !ethers.utils.isAddress(to)) {
+    throw new Error('Recipient address not provided or invalid. Set TO env var or pass as first CLI argument');
+  }
+  const amount = ethers.utils.parseUnits("2000", 18); // 2000 TTF
+
+  console.log(`Token Address: ${tokenAddress}`);
+  console.log(`From (sender): ${wallet.address}`);
+  console.log(`To (recipient): ${to}`);
+  console.log(`Amount (raw): ${amount.toString()}`);
+  console.log(`Amount (TTF): ${ethers.utils.formatUnits(amount, 18)}`);
+
+  // Show sender balance before
+  const balanceBefore = await token.balanceOf(wallet.address);
+  console.log(`Sender balance before: ${ethers.utils.formatUnits(balanceBefore, 18)} TTF`);
+
+  // Check if token contract exists at address
+  const code = await provider.getCode(tokenAddress);
+  if (code === "0x") {
+    throw new Error(`No contract deployed at ${tokenAddress}`);
+  }
 
   try {
-    const [name, symbol, decimals] = await Promise.all([
-      token.name().catch(() => 'TTF'),
-      token.symbol().catch(() => 'TTF'),
-      token.decimals().catch(() => 18)
-    ]);
-
-    console.log(`Token: ${name} (${symbol})`);
-    console.log(`Address: ${TOKEN_ADDRESS}`);
-    console.log(`Decimals: ${decimals}`);
-
-    // Validate recipient
-    if (!ethers.utils.isAddress(to)) {
-      throw new Error('Invalid recipient address');
-    }
-
-    const amount = ethers.utils.parseUnits(amountInput || '0', decimals);
-
-    // Show balances before
-    if (wallet) {
-      const balanceBefore = await token.balanceOf(wallet.address);
-      console.log(`Sender balance before: ${ethers.utils.formatUnits(balanceBefore, decimals)} ${symbol}`);
-    } else {
-      console.log('No PRIVATE_KEY provided; running in read-only / dry-run mode.');
-    }
-
-    const receiverBefore = await token.balanceOf(to);
-    console.log(`Receiver balance before: ${ethers.utils.formatUnits(receiverBefore, decimals)} ${symbol}`);
-
-    console.log(`Prepared transfer: ${ethers.utils.formatUnits(amount, decimals)} ${symbol} -> ${to}`);
-
-    // If not confirmed, just print the encoded tx data and exit
-    const iface = new ethers.utils.Interface(erc20ABI);
-    const data = iface.encodeFunctionData('transfer', [to, amount]);
-    console.log('Encoded tx data:', data);
-
-    if (!confirm) {
-      console.log('Dry-run (no transfer). Re-run with --confirm or set CONFIRM=1 to actually send.');
-      process.exit(0);
-    }
-
-    if (!wallet) {
-      console.error('Cannot send transaction: PRIVATE_KEY not set in contracts/.env');
-      process.exit(1);
-    }
-
-    console.log(`Sending ${ethers.utils.formatUnits(amount, decimals)} ${symbol} to ${to}...`);
+    console.log(`🚀 Sending 2000 TTF to ${to}...`);
     const tx = await token.transfer(to, amount);
     const receipt = await tx.wait();
-    console.log('✅ Transfer confirmed:', receipt.transactionHash);
 
+    if (receipt.status !== 1) {
+      throw new Error("Transaction failed (status != 1)");
+    }
+
+    // Print tx hash + BDAGScan URL
+    console.log("✅ Transfer confirmed!");
+    console.log("Transaction Hash:", tx.hash);
+    console.log(`View on Explorer: https://primordial.bdagscan.com/tx/${tx.hash}?chain=EVM`);
+
+    // Show balances after
     const balanceAfter = await token.balanceOf(wallet.address);
-    console.log(`Sender balance after: ${ethers.utils.formatUnits(balanceAfter, decimals)} ${symbol}`);
-    const receiverAfter = await token.balanceOf(to);
-    console.log(`Receiver balance after: ${ethers.utils.formatUnits(receiverAfter, decimals)} ${symbol}`);
+    console.log(`Sender balance after: ${ethers.utils.formatUnits(balanceAfter, 18)} TTF`);
+
+    const receiverBalance = await token.balanceOf(to);
+    console.log(`Receiver balance: ${ethers.utils.formatUnits(receiverBalance, 18)} TTF`);
   } catch (err) {
-    console.error('Error:', err && err.message ? err.message : err);
-    process.exit(1);
+    // Try to decode revert reason if possible
+    if (err && err.error && err.error.data) {
+      const revertData = err.error.data;
+      try {
+        const reason = ethers.utils.toUtf8String('0x' + revertData.substr(138));
+        console.error('Revert reason:', reason);
+      } catch (decodeErr) {
+        console.error('Failed to decode revert reason:', decodeErr);
+      }
+    }
+    throw new Error('Transfer failed: ' + (err && err.message ? err.message : err));
   }
 }
 
-main();
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

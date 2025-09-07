@@ -57,8 +57,14 @@ export default function Header() {
         const bal = await token.balanceOf(addr);
         setBalance(formatUnits(bal, 18));
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      // Log useful error details for debugging injected wallet issues
+      try {
+        console.error('Connect error:', err && err.message ? err.message : err, err && err.stack ? err.stack : '');
+        console.error('Error object:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+      } catch (e) {
+        console.error('Connect error (fallback):', err);
+      }
     } finally {
       setLoading(false);
     }
