@@ -114,6 +114,25 @@ export default function RewardsPage() {
     }
   }
 
+  // Disconnect wallet
+  async function handleDisconnectWallet() {
+    const confirmed = window.confirm('Are you sure you want to disconnect your wallet? The page will refresh.');
+    
+    if (confirmed) {
+      // Clear all wallet-related state
+      setWalletAddress('');
+      setIsConnected(false);
+      setClaimStatus({ canClaim: false });
+      setClaimHistory([]);
+      setTokenBalance('0');
+      setError(null);
+      setSuccess(null);
+      
+      // Auto refresh the page
+      window.location.reload();
+    }
+  }
+
   // Check if user can claim rewards (requires Udemy link)
   async function checkClaimEligibility(address: string, udemyLink?: string) {
     try {
@@ -341,12 +360,24 @@ export default function RewardsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-sm border border-green-800 flex items-center gap-1">
-                <CheckCircle className="w-4 h-4" />
-                Connected
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-sm border border-green-800 flex items-center gap-1">
+                  <CheckCircle className="w-4 h-4" />
+                  Connected
+                </div>
+                <span className="font-mono text-sm text-gray-300">{formatAddress(walletAddress)}</span>
               </div>
-              <span className="font-mono text-sm text-gray-300">{formatAddress(walletAddress)}</span>
+              
+              {/* Disconnect Button */}
+              <button
+                onClick={handleDisconnectWallet}
+                disabled={loading}
+                className="px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 border border-red-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Disconnect wallet"
+              >
+                Disconnect
+              </button>
             </div>
             
             {/* Token Balance Display */}
