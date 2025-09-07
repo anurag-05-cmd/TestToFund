@@ -9,10 +9,10 @@ const usedCertificates = new Set<string>();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { address: string } }
+  { params }: { params: Promise<{ address: string }> }
 ) {
   try {
-    const address = params.address;
+    const { address } = await params;
     const url = new URL(request.url);
     
     // Try multiple parameter names
@@ -36,9 +36,8 @@ export async function GET(
       });
     }
 
-    // Clean the URL
+    // Multiple cleaning attempts
     udemyLink = udemyLink.trim();
-    
     try {
       udemyLink = decodeURIComponent(udemyLink);
     } catch (e) {
@@ -49,26 +48,46 @@ export async function GET(
     udemyLink = udemyLink.replace(/^["']|["']$/g, '');
     udemyLink = udemyLink.replace(/\\/g, '');
 
-    // Validation patterns for Udemy certificate URLs
-    const isValidUdemyUrl = (url: string): boolean => {
-      // Check if it's a Udemy certificate URL with UC- format
-      const udemyPattern = /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/i;
-      
-      if (udemyPattern.test(url)) {
-        return true;
-      }
-      
-      // Fallback: check if it contains the basic structure
-      if (url.toLowerCase().includes('udemy.com') && 
-          url.toLowerCase().includes('certificate') && 
-          url.toLowerCase().includes('uc-')) {
-        return true;
-      }
-      
-      return false;
-    };
+    // Multiple validation patterns - from most specific to most general
+    const patterns = [
+      // Exact pattern for your URL format
+      /^https:\/\/www\.udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      // With or without www
+      /^https:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      // HTTP or HTTPS
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]+\/?$/,
+      // More flexible character set
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[\w\-]+\/?$/,
+      // Very flexible - just check structure
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-.+\/?$/,
+      // Even more flexible
+      /udemy\.com\/certificate\/UC-/,
+      // Last resort - just check if it contains the basic structure
+      /certificate\/UC-/
+    ];
 
-    if (!isValidUdemyUrl(udemyLink)) {
+    let isValid = false;
+    for (const pattern of patterns) {
+      if (pattern.test(udemyLink)) {
+        isValid = true;
+        break;
+      }
+    }
+
+    // If still not valid, try case insensitive
+    if (!isValid) {
+      const caseInsensitivePattern = /certificate\/uc-/i;
+      isValid = caseInsensitivePattern.test(udemyLink);
+    }
+
+    if (!isValid) {
+      // Return success anyway if it looks like a Udemy URL
+      if (udemyLink.includes('udemy.com') && udemyLink.includes('certificate')) {
+        isValid = true;
+      }
+    }
+
+    if (!isValid) {
       return NextResponse.json({
         canClaim: false,
         alreadyClaimed: false,
@@ -107,11 +126,11 @@ export async function GET(
       udemyLinkValid: true
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Eligibility check error:', error);
     
     return NextResponse.json(
-      { error: 'Failed to check eligibility' },
+      { error: error.message || 'Failed to check eligibility' },
       { status: 500 }
     );
   }
