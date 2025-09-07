@@ -14,8 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TestToFund - Skill-to-Earn Platform",
-  description: "Watch videos, pass validation, and earn TTF tokens on the TestToFund platform",
+  title: "TestToFund - Learn, Validate, Earn",
+  description: "Transform your knowledge into rewards. Watch educational videos, pass validations, and earn TTF tokens on the TestToFund platform.",
+  keywords: "TestToFund, TTF tokens, learn to earn, blockchain education, cryptocurrency rewards",
+  authors: [{ name: "TestToFund Team" }],
+  openGraph: {
+    title: "TestToFund - Learn, Validate, Earn",
+    description: "Transform your knowledge into rewards with TestToFund",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

@@ -1,6 +1,8 @@
 "use client";
 import React, { useState, useEffect } from 'react';
+import { Wallet, Award, Upload, CheckCircle, Clock, ExternalLink, AlertCircle, TrendingUp } from 'lucide-react';
 import { connectWallet, formatAddress } from '../../src/lib/web3';
+import BackgroundVideo from '../../src/components/BackgroundVideo';
 
 interface ClaimStatus {
   canClaim: boolean;
@@ -18,6 +20,14 @@ interface ClaimHistory {
   certificateUrl?: string;
 }
 
+interface SuccessMessage {
+  message: string;
+  transactionHash?: string;
+  explorerUrl?: string;
+  amount?: string;
+  balance?: string;
+}
+
 export default function RewardsPage() {
   const [walletAddress, setWalletAddress] = useState('');
   const [isConnected, setIsConnected] = useState(false);
@@ -27,7 +37,7 @@ export default function RewardsPage() {
   const [claimStatus, setClaimStatus] = useState<ClaimStatus>({ canClaim: false });
   const [claimHistory, setClaimHistory] = useState<ClaimHistory[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [success, setSuccess] = useState<SuccessMessage | null>(null);
 
   // Connect wallet
   async function handleConnectWallet() {
@@ -47,10 +57,16 @@ export default function RewardsPage() {
     }
   }
 
-  // Check if user can claim rewards
-  async function checkClaimEligibility(address: string) {
+  // Check if user can claim rewards (requires Udemy link)
+  async function checkClaimEligibility(address: string, udemyLink?: string) {
     try {
-      const res = await fetch(`/api/rewards/check-eligibility/${address}`);
+      // Build URL with Udemy link parameter
+      const url = new URL(`/api/rewards/check-eligibility/${address}`, window.location.origin);
+      if (udemyLink) {
+        url.searchParams.set('udemyLink', udemyLink);
+      }
+      
+      const res = await fetch(url.toString());
       const data = await res.json();
       
       if (!res.ok) {
@@ -60,7 +76,10 @@ export default function RewardsPage() {
       setClaimStatus(data);
     } catch (err: any) {
       console.error('Eligibility check failed:', err);
-      setClaimStatus({ canClaim: false, reason: 'Unable to verify eligibility' });
+      setClaimStatus({ 
+        canClaim: false, 
+        reason: err.message || 'Unable to verify eligibility' 
+      });
     }
   }
 
@@ -103,56 +122,75 @@ export default function RewardsPage() {
 
   // Verify certificate and claim rewards
   async function handleClaimRewards() {
-  if (!walletAddress || (!certificate && !certificateUrl)) {
-    setError('Please connect wallet and provide certificate');
-    return;
-  }
-
-  setLoading(true);
-  setError(null);
-  setSuccess(null);
-
-  try {
-    const formData = new FormData();
-    formData.append('walletAddress', walletAddress);
-    
-    if (certificate) {
-      formData.append('certificate', certificate);
+    // Validate prerequisites
+    if (!walletAddress) {
+      setError('Please connect your wallet first');
+      return;
     }
-    
-    if (certificateUrl) {
+
+    if (!certificateUrl) {
+      setError('Please provide a valid Udemy certificate URL');
+      return;
+    }
+
+    if (!claimStatus.canClaim) {
+      setError('You are not eligible to claim tokens with this certificate');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      // Create form data with security measures
+      const formData = new FormData();
+      formData.append('walletAddress', walletAddress);
       formData.append('certificateUrl', certificateUrl);
+      
+      // Add timestamp to prevent replay attacks
+      formData.append('timestamp', Date.now().toString());
+      
+      // Only send certificateUrl (no file upload needed)
+      const res = await fetch('/api/rewards/claim', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          // Add additional security headers if needed
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to claim rewards');
+      }
+
+      // Set success with proper transaction info
+      setSuccess({
+        message: 'Successfully claimed 2000 TTF tokens!',
+        transactionHash: data.transactionHash,
+        explorerUrl: data.explorerUrl,
+        amount: data.amount,
+        balance: data.receiverBalance
+      });
+      
+      // Refresh claim status and history
+      await Promise.all([
+        checkClaimEligibility(walletAddress, certificateUrl),
+        loadClaimHistory(walletAddress)
+      ]);
+      
+      // Clear form
+      setCertificateUrl('');
+      
+    } catch (err: any) {
+      console.error('Claim error:', err);
+      setError(err?.message || 'Failed to claim rewards. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    const res = await fetch('/api/rewards/claim', {
-      method: 'POST',
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || 'Failed to claim rewards');
-    }
-
-    setSuccess(`🎉 Successfully claimed 2000 TTF tokens! Transaction: ${data.txHash}`);
-    
-    // Refresh claim status and history
-    await Promise.all([
-      checkClaimEligibility(walletAddress),
-      loadClaimHistory(walletAddress)
-    ]);
-    
-    // Clear form
-    setCertificate(null);
-    setCertificateUrl('');
-    
-  } catch (err: any) {
-    setError(err?.message || 'Failed to claim rewards');
-  } finally {
-    setLoading(false);
   }
-}
 
   // Format date
   function formatDate(dateString: string) {
@@ -166,97 +204,142 @@ export default function RewardsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-gradient-to-r from-[#00A88E] to-[#409F01] text-white p-6 rounded-lg mb-6">
-        <h1 className="text-3xl font-bold mb-2">🎓 Learning Rewards</h1>
-        <p className="text-lg opacity-90">Complete Udemy courses and claim 2000 TTF tokens!</p>
-      </div>
+    <>
+      <BackgroundVideo />
+      <div className="relative z-10 min-h-screen">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Hero Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+              Learning <span className="bg-gradient-to-r from-gray-100 to-gray-400 bg-clip-text text-transparent">Rewards</span>
+            </h1>
+            <p className="text-xl text-gray-400 max-w-3xl mx-auto font-light">
+              Complete educational courses, validate your learning, and earn 
+              <span className="text-gray-200 font-medium"> 2000 TTF tokens</span> for each certificate.
+            </p>
+          </div>
 
-      {/* Wallet Connection */}
-      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold mb-4">Connect Your Wallet</h2>
+          {/* Wallet Connection */}
+          <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 mb-8">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+              <Wallet className="w-6 h-6 text-gray-400" />
+              Connect Your Wallet
+            </h2>
         {!isConnected ? (
-          <button 
-            onClick={handleConnectWallet}
-            className="bg-[#00A88E] hover:bg-[#00967D] text-white px-6 py-3 rounded-lg transition-colors"
-          >
-            Connect Wallet
-          </button>
+          <div className="text-center">
+            <p className="text-gray-400 mb-6">Connect your wallet to start earning TTF tokens</p>
+            <button 
+              onClick={handleConnectWallet}
+              className="px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 transition-all duration-300 flex items-center gap-2 mx-auto"
+            >
+              <Wallet className="w-5 h-5" />
+              Connect Wallet
+            </button>
+          </div>
         ) : (
           <div className="flex items-center gap-3">
-            <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-              ✓ Connected
+            <div className="bg-green-900/50 text-green-400 px-3 py-1 rounded-full text-sm border border-green-800 flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" />
+              Connected
             </div>
-            <span className="font-mono text-sm">{formatAddress(walletAddress)}</span>
+            <span className="font-mono text-sm text-gray-300">{formatAddress(walletAddress)}</span>
           </div>
         )}
       </div>
 
       {/* Claim Section */}
       {isConnected && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold mb-4">📜 Submit Your Certificate</h2>
+        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8 mb-8">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <Award className="w-6 h-6 text-gray-400" />
+            Submit Your Certificate
+          </h2>
           
           {/* Claim Status */}
-          <div className="mb-4">
+          <div className="mb-6">
             {claimStatus.alreadyClaimed ? (
-              <div className="bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded-lg">
-                🎉 You have already claimed your rewards!
+              <div className="bg-blue-900/30 border border-blue-800 text-blue-300 p-4 rounded-lg">
+                <CheckCircle className="w-5 h-5 inline mr-2" />
+                You have already claimed your rewards!
               </div>
             ) : claimStatus.canClaim ? (
-              <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-lg">
-                ✅ You are eligible to claim 2000 TTF tokens!
+              <div className="bg-green-900/30 border border-green-800 text-green-300 p-4 rounded-lg">
+                <CheckCircle className="w-5 h-5 inline mr-2" />
+                Valid certificate detected! Ready to claim 2000 TTF tokens.
+              </div>
+            ) : claimStatus.reason ? (
+              <div className="bg-red-900/30 border border-red-800 text-red-300 p-4 rounded-lg">
+                <AlertCircle className="w-5 h-5 inline mr-2" />
+                {claimStatus.reason}
               </div>
             ) : (
-              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-3 rounded-lg">
-                📋 Please upload your Udemy certificate to claim rewards
+              <div className="bg-yellow-900/30 border border-yellow-800 text-yellow-300 p-4 rounded-lg">
+                <Upload className="w-5 h-5 inline mr-2" />
+                Please provide your Udemy certificate URL to claim rewards
               </div>
             )}
           </div>
 
           {!claimStatus.alreadyClaimed && (
-            <div className="space-y-4">
-              {/* File Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Certificate (JPG, PNG, PDF - Max 5MB)
-                </label>
-                <input
-                  type="file"
-                  accept=".jpg,.jpeg,.png,.pdf"
-                  onChange={handleCertificateUpload}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#00A88E] file:text-white hover:file:bg-[#00967D] file:cursor-pointer cursor-pointer"
-                />
-              </div>
-
-              {/* OR divider */}
-              <div className="flex items-center">
-                <div className="flex-1 border-t border-gray-300"></div>
-                <span className="px-3 text-gray-500 text-sm">OR</span>
-                <div className="flex-1 border-t border-gray-300"></div>
-              </div>
-
+            <div className="space-y-6">
               {/* Certificate URL */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Udemy Certificate URL
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Udemy Certificate URL (Required)
                 </label>
                 <input
                   type="url"
                   value={certificateUrl}
-                  onChange={(e) => setCertificateUrl(e.target.value)}
+                  onChange={(e) => {
+                    const url = e.target.value;
+                    setCertificateUrl(url);
+                    
+                    // Clear any file upload when URL is entered
+                    if (url && certificate) {
+                      setCertificate(null);
+                    }
+                    
+                    // Check eligibility when URL changes and wallet is connected
+                    if (walletAddress && url) {
+                      checkClaimEligibility(walletAddress, url);
+                    } else if (walletAddress) {
+                      // Reset status if URL is cleared
+                      setClaimStatus({ 
+                        canClaim: false, 
+                        reason: 'Udemy certificate link is required' 
+                      });
+                    }
+                  }}
                   placeholder="https://www.udemy.com/certificate/..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#00A88E] focus:border-[#00A88E] outline-none"
+                  className="w-full px-4 py-3 border border-gray-700 rounded-lg bg-gray-800/50 text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-gray-600 focus:border-gray-600 outline-none"
                 />
+                <p className="text-xs text-gray-500 mt-2">
+                  Please provide a valid Udemy certificate URL to claim your tokens
+                </p>
               </div>
 
               {/* Claim Button */}
               <button
                 onClick={handleClaimRewards}
-                disabled={loading || (!certificate && !certificateUrl)}
-                className="w-full bg-[#409F01] hover:bg-[#367A01] disabled:bg-gray-400 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+                disabled={loading || !certificateUrl || !claimStatus.canClaim}
+                className="w-full bg-white text-gray-900 hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed py-4 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
               >
-                {loading ? '⏳ Verifying & Processing...' : '🎁 Claim 2000 TTF Tokens'}
+                {loading ? (
+                  <>
+                    <Clock className="w-5 h-5 animate-spin" />
+                    Verifying & Processing...
+                  </>
+                ) : !claimStatus.canClaim ? (
+                  <>
+                    <AlertCircle className="w-5 h-5" />
+                    {claimStatus.reason || 'Cannot Claim'}
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-5 h-5" />
+                    Claim 2000 TTF Tokens
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -271,26 +354,59 @@ export default function RewardsPage() {
       )}
 
       {success && (
-        <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg mb-6">
-          {success}
+        <div className="bg-green-900/30 border border-green-800 text-green-300 p-4 rounded-lg mb-6">
+          <div className="space-y-2">
+            <div className="font-semibold flex items-center gap-2">
+              <CheckCircle className="w-5 h-5" />
+              {success.message}
+            </div>
+            {success.amount && (
+              <div className="flex items-center gap-2 text-green-400">
+                <TrendingUp className="w-4 h-4" />
+                Amount: {success.amount} TTF
+              </div>
+            )}
+            {success.balance && (
+              <div className="flex items-center gap-2 text-green-400">
+                <Wallet className="w-4 h-4" />
+                New Balance: {success.balance} TTF
+              </div>
+            )}
+            {success.transactionHash && success.explorerUrl && (
+              <div className="flex items-center gap-2">
+                <ExternalLink className="w-4 h-4" />
+                <a 
+                  href={success.explorerUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="underline hover:text-green-200"
+                >
+                  View Transaction: {success.transactionHash.slice(0, 8)}...{success.transactionHash.slice(-6)}
+                </a>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
       {/* Claim History */}
       {isConnected && claimHistory.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4">📈 Your Claim History</h2>
-          <div className="space-y-3">
+        <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-8">
+          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
+            <Clock className="w-6 h-6 text-gray-400" />
+            Claim History
+          </h2>
+          <div className="space-y-4">
             {claimHistory.map((claim) => (
-              <div key={claim.id} className="border border-gray-100 rounded-lg p-4 hover:border-[#00A88E]/30 transition-colors">
+              <div key={claim.id} className="border border-gray-700 rounded-lg p-4">
                 <div className="flex justify-between items-start mb-2">
-                  <div className="text-lg font-semibold text-[#00A88E]">
+                  <div className="text-lg font-semibold text-white">
                     +{claim.amount} TTF
                   </div>
                   <div className={`px-2 py-1 rounded text-xs font-medium ${
-                    claim.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    claim.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
+                    claim.status === 'completed' ? 'bg-green-900/50 text-green-400 border border-green-800' :
+                    claim.status === 'pending' ? 'bg-yellow-900/50 text-yellow-400 border border-yellow-800' :
+                    'bg-red-900/50 text-red-400 border border-red-800'
                   }`}>
                     {claim.status.toUpperCase()}
                   </div>
@@ -316,6 +432,8 @@ export default function RewardsPage() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </div>
+    </>
   );
 }
