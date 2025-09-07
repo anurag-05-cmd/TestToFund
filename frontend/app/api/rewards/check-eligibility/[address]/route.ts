@@ -1,5 +1,4 @@
 // Save as: app/api/rewards/check-eligibility/[address]/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 
 // Simple in-memory storage (should match the claim route)
@@ -15,7 +14,7 @@ export async function GET(
   try {
     const { address } = await params;
     const url = new URL(request.url);
-    const udemyLink = url.searchParams.get('udemyLink') || url.searchParams.get('certUrl');
+    let udemyLink = url.searchParams.get('udemyLink') || url.searchParams.get('certUrl');
 
     if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
       return NextResponse.json(
@@ -24,7 +23,7 @@ export async function GET(
       );
     }
 
-    // Check if Udemy link is provided and valid
+    // Check if Udemy link is provided
     if (!udemyLink) {
       return NextResponse.json({
         canClaim: false,
@@ -33,18 +32,49 @@ export async function GET(
       });
     }
 
-    // Validate Udemy link format
-    const udemyLinkPattern = /^https?:\/\/(?:ude\.my\/UC-[\w-]+|(?:www\.)?udemy\.com\/certificate\/UC-[\w-]+)\/?$/;
-    if (!udemyLinkPattern.test(udemyLink)) {
+    // Clean the URL - remove extra whitespace and decode if needed
+    udemyLink = decodeURIComponent(udemyLink.trim());
+    
+    // Log for debugging
+    console.log('Checking Udemy link:', udemyLink);
+
+    // More flexible regex pattern that handles various formats
+    const udemyLinkPatterns = [
+      // Standard certificate URLs
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[a-fA-F0-9\-]{10,}\/?$/,
+      // Short URLs  
+      /^https?:\/\/ude\.my\/UC-[a-fA-F0-9\-]{6,}\/?$/,
+      // More flexible pattern to catch edge cases
+      /^https?:\/\/(?:www\.)?udemy\.com\/certificate\/UC-[\w\-]{10,}\/?$/
+    ];
+
+    let isValidFormat = false;
+    for (const pattern of udemyLinkPatterns) {
+      if (pattern.test(udemyLink)) {
+        isValidFormat = true;
+        console.log('Matched pattern:', pattern);
+        break;
+      }
+    }
+
+    if (!isValidFormat) {
+      console.log('No pattern matched for URL:', udemyLink);
       return NextResponse.json({
         canClaim: false,
         alreadyClaimed: false,
-        reason: 'Invalid Udemy certificate link format. Must be a valid Udemy certificate URL.'
+        reason: 'Invalid Udemy certificate link format. Please ensure it is a valid Udemy certificate URL (e.g., https://www.udemy.com/certificate/UC-...)'
       });
     }
 
+    // Normalize the URL for comparison (remove trailing slash, convert to lowercase)
+    const normalizedUdemyLink = udemyLink.toLowerCase().replace(/\/$/, '');
+
     // Check if certificate has already been used by another address
-    if (usedCertificates.has(udemyLink)) {
+    const isUsed = Array.from(usedCertificates).some(cert => 
+      cert.toLowerCase().replace(/\/$/, '') === normalizedUdemyLink
+    );
+
+    if (isUsed) {
       return NextResponse.json({
         canClaim: false,
         alreadyClaimed: false,
@@ -59,7 +89,8 @@ export async function GET(
       canClaim: !alreadyClaimed,
       alreadyClaimed,
       reason: alreadyClaimed ? 'Already claimed rewards' : undefined,
-      udemyLinkValid: true
+      udemyLinkValid: true,
+      processedUrl: normalizedUdemyLink // For debugging
     });
 
   } catch (error: any) {
