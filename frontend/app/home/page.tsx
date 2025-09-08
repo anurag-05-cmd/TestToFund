@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Clock, Coins, BookOpen, Zap, Users, CheckCircle, TrendingUp, ExternalLink } from 'lucide-react';
 import BackgroundVideo from '../../src/components/BackgroundVideo';
+import Navbar from '../../src/components/Navbar';
+import TestMate from '../../src/components/TestMate';
 
 export default function HomePage() {
   const [loading, setLoading] = useState(false);
@@ -173,6 +175,7 @@ export default function HomePage() {
 
   return (
     <>
+      <Navbar />
       <BackgroundVideo />
       <div className="relative z-10 min-h-screen w-full">
         {/* Hero Section */}
@@ -337,6 +340,9 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+      
+      {/* TestMate Chatbot */}
+      <TestMate apiKey="sLni4WmoTYtLho7u0bFW9PSCYcfIr0QcBhBi7Dyd" />
     </>
   );
 }

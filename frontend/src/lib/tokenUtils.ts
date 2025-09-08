@@ -58,3 +58,53 @@ export async function verifyTransaction(txHash: string) {
 export function getExplorerUrl(txHash: string) {
   return `https://primordial.bdagscan.com/tx/${txHash}?chain=EVM`;
 }
+
+// Balance monitoring for notifications
+let previousBalance: string | null = null;
+let balanceMonitorInterval: NodeJS.Timeout | null = null;
+
+export function startBalanceMonitoring(
+  walletAddress: string, 
+  onBalanceChange: (newBalance: string, difference: string) => void
+) {
+  // Clear any existing monitoring
+  stopBalanceMonitoring();
+  
+  // Get initial balance
+  checkTokenBalance(walletAddress).then(result => {
+    previousBalance = result.balance;
+  }).catch(console.error);
+  
+  // Monitor balance every 10 seconds
+  balanceMonitorInterval = setInterval(async () => {
+    try {
+      const result = await checkTokenBalance(walletAddress);
+      const currentBalance = result.balance;
+      
+      if (previousBalance !== null && currentBalance !== previousBalance) {
+        const prev = parseFloat(previousBalance);
+        const curr = parseFloat(currentBalance);
+        const difference = (curr - prev).toFixed(2);
+        
+        // Only notify for positive changes (deposits)
+        if (curr > prev) {
+          onBalanceChange(currentBalance, difference);
+        }
+        
+        previousBalance = currentBalance;
+      } else if (previousBalance === null) {
+        previousBalance = currentBalance;
+      }
+    } catch (error) {
+      console.error('Balance monitoring error:', error);
+    }
+  }, 10000); // Check every 10 seconds
+}
+
+export function stopBalanceMonitoring() {
+  if (balanceMonitorInterval) {
+    clearInterval(balanceMonitorInterval);
+    balanceMonitorInterval = null;
+  }
+  previousBalance = null;
+}

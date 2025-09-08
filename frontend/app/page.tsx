@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { connectWallet } from '../src/lib/web3';
+import { connectWallet, restoreWalletConnection } from '../src/lib/web3Onboard';
 
 export default function WelcomePage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });

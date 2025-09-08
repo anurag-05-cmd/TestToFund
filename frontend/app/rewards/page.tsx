@@ -1,12 +1,15 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Wallet, Award, Upload, CheckCircle, Clock, ExternalLink, AlertCircle, TrendingUp, RefreshCw } from 'lucide-react';
-import { connectWallet, formatAddress } from '../../src/lib/web3';
-import { checkTokenBalance } from '../../src/lib/tokenUtils';
+import { connectWallet, disconnectWallet, restoreWalletConnection, formatAddress } from '../../src/lib/web3Onboard';
+import { checkTokenBalance, startBalanceMonitoring, stopBalanceMonitoring } from '../../src/lib/tokenUtils';
 import BackgroundVideo from '../../src/components/BackgroundVideo';
 import NetworkStatus from '../../src/components/NetworkStatus';
 import NetworkSetupGuide from '../../src/components/NetworkSetupGuide';
 import WalletDetection from '../../src/components/WalletDetection';
+import DepositNotification from '../../src/components/DepositNotification';
+import Navbar from '../../src/components/Navbar';
+import TestMate from '../../src/components/TestMate';
 
 interface ClaimStatus {
   canClaim: boolean;
@@ -44,6 +47,54 @@ export default function RewardsPage() {
   const [success, setSuccess] = useState<SuccessMessage | null>(null);
   const [tokenBalance, setTokenBalance] = useState<string>('0');
   const [balanceLoading, setBalanceLoading] = useState(false);
+  const [depositNotification, setDepositNotification] = useState<{ amount: string } | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+
+  // Initialize wallet connection on page load
+  useEffect(() => {
+    initializeWalletConnection();
+  }, []);
+
+  // Cleanup balance monitoring on unmount
+  useEffect(() => {
+    return () => {
+      stopBalanceMonitoring();
+    };
+  }, []);
+
+  async function initializeWalletConnection() {
+    try {
+      setIsInitializing(true);
+      console.log('🔄 Initializing wallet connection...');
+      
+      const restored = await restoreWalletConnection();
+      
+      if (restored.connected && restored.address) {
+        console.log('✅ Wallet connection restored:', restored.address);
+        setWalletAddress(restored.address);
+        setIsConnected(true);
+        
+        // Load data for the restored wallet
+        await Promise.all([
+          checkClaimEligibility(restored.address),
+          loadClaimHistory(restored.address),
+          checkWalletBalance()
+        ]);
+        
+        // Start balance monitoring for deposit notifications
+        startBalanceMonitoring(restored.address, (newBalance, difference) => {
+          setTokenBalance(newBalance);
+          setDepositNotification({ amount: difference });
+        });
+      } else {
+        console.log('ℹ️ No previous wallet connection found');
+      }
+    } catch (error) {
+      console.error('Failed to initialize wallet:', error);
+    } finally {
+      setIsInitializing(false);
+    }
+  }
 
   // Check token balance
   async function checkWalletBalance() {
@@ -62,10 +113,19 @@ export default function RewardsPage() {
 
   // Auto-refresh balance when wallet address changes
   useEffect(() => {
-    if (walletAddress) {
+    if (walletAddress && isConnected) {
       checkWalletBalance();
+      
+      // Start balance monitoring for deposit notifications
+      startBalanceMonitoring(walletAddress, (newBalance, difference) => {
+        setTokenBalance(newBalance);
+        setDepositNotification({ amount: difference });
+      });
+    } else {
+      // Stop monitoring when wallet disconnected
+      stopBalanceMonitoring();
     }
-  }, [walletAddress]);
+  }, [walletAddress, isConnected]);
 
   // Connect wallet
   async function handleConnectWallet() {
@@ -81,9 +141,6 @@ export default function RewardsPage() {
       
       // Show success message with details
       const messages = [];
-      if (result.networkSwitched) {
-        messages.push('✅ Connected to Primordial BlockDAG Testnet');
-      }
       if (result.tokenAdded) {
         messages.push('✅ TTF Token ready in your wallet');
       }
@@ -106,6 +163,12 @@ export default function RewardsPage() {
         checkWalletBalance()
       ]);
       
+      // Start balance monitoring for deposit notifications
+      startBalanceMonitoring(result.address, (newBalance, difference) => {
+        setTokenBalance(newBalance);
+        setDepositNotification({ amount: difference });
+      });
+      
     } catch (err: any) {
       console.error('❌ Wallet connection failed:', err);
       setError(err?.message || 'Failed to connect wallet. Please try again.');
@@ -116,20 +179,30 @@ export default function RewardsPage() {
 
   // Disconnect wallet
   async function handleDisconnectWallet() {
-    const confirmed = window.confirm('Are you sure you want to disconnect your wallet? The page will refresh.');
+    const confirmed = window.confirm('Are you sure you want to disconnect your wallet?');
     
     if (confirmed) {
-      // Clear all wallet-related state
-      setWalletAddress('');
-      setIsConnected(false);
-      setClaimStatus({ canClaim: false });
-      setClaimHistory([]);
-      setTokenBalance('0');
-      setError(null);
-      setSuccess(null);
-      
-      // Auto refresh the page
-      window.location.reload();
+      try {
+        // Stop balance monitoring
+        stopBalanceMonitoring();
+        
+        // Disconnect using Web3 Onboard
+        await disconnectWallet();
+        
+        // Clear all wallet-related state
+        setWalletAddress('');
+        setIsConnected(false);
+        setClaimStatus({ canClaim: false });
+        setClaimHistory([]);
+        setTokenBalance('0');
+        setError(null);
+        setSuccess(null);
+        setDepositNotification(null);
+        
+        console.log('✅ Wallet disconnected successfully');
+      } catch (error) {
+        console.error('Failed to disconnect wallet:', error);
+      }
     }
   }
 
@@ -300,8 +373,30 @@ export default function RewardsPage() {
 
   return (
     <>
+      <Navbar />
       <BackgroundVideo />
-      <div className="relative z-10 min-h-screen">
+      
+      {/* Deposit Notification */}
+      {depositNotification && (
+        <DepositNotification
+          amount={depositNotification.amount}
+          onClose={() => setDepositNotification(null)}
+        />
+      )}
+      
+      <div className="relative z-10 min-h-screen pt-16">
+        {/* Loading overlay for initialization */}
+        {isInitializing && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div className="bg-gray-900/90 border border-gray-700 rounded-xl p-6 text-center">
+              <div className="flex items-center gap-3 text-white">
+                <Clock className="w-5 h-5 animate-spin" />
+                <span>Checking wallet connection...</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Hero Header */}
           <div className="text-center mb-12">
@@ -625,6 +720,9 @@ export default function RewardsPage() {
       )}
         </div>
       </div>
+      
+      {/* TestMate Chatbot */}
+      <TestMate apiKey="sLni4WmoTYtLho7u0bFW9PSCYcfIr0QcBhBi7Dyd" />
     </>
   );
 }
