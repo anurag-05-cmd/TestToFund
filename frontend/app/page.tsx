@@ -101,22 +101,14 @@ export default function WelcomePage() {
             Complete Courses, Get Verified and Earn TTF
           </p>
           
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {/* Action Button */}
+          <div className="flex justify-center">
             <Link 
               href="/home"
               className="px-8 py-4 bg-[#00A88E] hover:bg-[#00967D] text-white font-medium rounded-2xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               Get Started
             </Link>
-            
-            <button 
-              onClick={handleConnectWallet}
-              disabled={isConnecting}
-              className="px-8 py-4 bg-transparent border-2 border-slate-600 text-slate-300 hover:border-[#00A88E] hover:text-[#00A88E] font-medium rounded-2xl transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isConnecting ? 'Connecting...' : 'Connect Wallet'}
-            </button>
           </div>
         </div>
 
