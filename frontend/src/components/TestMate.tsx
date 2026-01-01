@@ -8,11 +8,7 @@ interface Message {
   timestamp: Date;
 }
 
-interface TestMateProps {
-  apiKey: string;
-}
-
-export default function TestMate({ apiKey }: TestMateProps) {
+export default function TestMate() {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -50,15 +46,23 @@ export default function TestMate({ apiKey }: TestMateProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://api.cohere.ai/v1/generate', {
+      const apiKey = process.env.NEXT_PUBLIC_COHERE_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error('Cohere API key not found in environment variables');
+      }
+
+      // Use Cohere Chat API v1
+      const response = await fetch('https://api.cohere.ai/v1/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: 'command',
-          prompt: `You are TestMate, a helpful AI assistant for the TestToFund platform. TestToFund is a learn-to-earn platform where users complete educational courses (especially Udemy courses) and earn TTF tokens as rewards. 
+          message: text,
+          model: 'command-a-03-2025',
+          preamble: `You are TestMate, a helpful AI assistant for the TestToFund platform. TestToFund is a learn-to-earn platform where users complete educational courses (especially Udemy courses) and earn TTF tokens as rewards. 
 
 Key features of TestToFund:
 - Users complete Udemy courses and upload certificates
@@ -69,21 +73,28 @@ Key features of TestToFund:
 - Platform has anti-cheat measures and certificate verification
 - Built by Team EXPOSE: Anurag, Debapriya, Prithvi, and Sangram
 
-User question: ${text}
-
-Provide a helpful, friendly response as TestMate. Keep responses concise but informative. If asked about technical details, be specific about TestToFund's features. If asked about the team, mention Team EXPOSE members.`,
-          max_tokens: 200,
+Provide helpful, friendly responses as TestMate. Keep responses concise but informative. If asked about technical details, be specific about TestToFund's features.`,
           temperature: 0.7,
-          truncate: 'END'
+          max_tokens: 200,
         })
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response from AI');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Cohere API Error:', errorData);
+        
+        // Handle specific error codes
+        if (response.status === 429) {
+          throw new Error('RATE_LIMIT');
+        } else if (response.status === 401) {
+          throw new Error('Invalid API key. Please check your configuration.');
+        } else {
+          throw new Error(`Failed to get response from AI: ${response.status}`);
+        }
       }
 
       const data = await response.json();
-      const aiResponse = data.generations[0]?.text?.trim() || "I'm sorry, I couldn't generate a response. Please try again.";
+      const aiResponse = data.text?.trim() || "I'm sorry, I couldn't generate a response. Please try again.";
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -93,11 +104,21 @@ Provide a helpful, friendly response as TestMate. Keep responses concise but inf
       };
 
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
+      
+      let errorText = "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
+      
+      // Provide specific error messages
+      if (error.message === 'RATE_LIMIT') {
+        errorText = "⚠️ Rate limit reached. The Cohere API has a limit on free tier usage. Please wait a few minutes before trying again, or consider upgrading your Cohere API plan at https://cohere.com/pricing";
+      } else if (error.message?.includes('API key')) {
+        errorText = "⚠️ API key configuration error. Please check your NEXT_PUBLIC_COHERE_API_KEY in .env.local";
+      }
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        text: errorText,
         isUser: false,
         timestamp: new Date()
       };
@@ -107,8 +128,14 @@ Provide a helpful, friendly response as TestMate. Keep responses concise but inf
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(inputMessage);
+    }
+  };
+
+  const handleSendClick = () => {
     sendMessage(inputMessage);
   };
 
@@ -210,25 +237,26 @@ Provide a helpful, friendly response as TestMate. Keep responses concise but inf
 
               {/* Input - Always visible at bottom */}
               <div className="border-t border-gray-700 bg-gray-900 flex-shrink-0 h-[70px]">
-                <form onSubmit={handleSubmit} className="p-3 md:p-4 h-full flex items-center">
+                <div className="p-3 md:p-4 h-full flex items-center">
                   <div className="flex gap-2 w-full">
                     <input
                       type="text"
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
+                      onKeyDown={handleSubmit}
                       placeholder="Ask TestMate anything..."
                       className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-gray-200 placeholder-gray-400 focus:outline-none focus:border-[#00A88E] transition-all duration-200 text-sm md:text-base focus:ring-1 focus:ring-[#00A88E]/30"
                       disabled={isLoading}
                     />
                     <button
-                      type="submit"
+                      onClick={handleSendClick}
                       disabled={isLoading || !inputMessage.trim()}
                       className="bg-gradient-to-r from-[#00A88E] to-[#00967D] hover:from-[#00967D] hover:to-[#007A6A] disabled:bg-gray-700 disabled:cursor-not-allowed text-white p-2 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:hover:scale-100"
                     >
                       <Send className="w-3 h-3 md:w-4 md:h-4" />
                     </button>
                   </div>
-                </form>
+                </div>
               </div>
             </>
           )}

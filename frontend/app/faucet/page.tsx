@@ -468,7 +468,7 @@ export default function FaucetPage() {
         </div>
       </div>
       
-      <TestMate apiKey="sLni4WmoTYtLho7u0bFW9PSCYcfIr0QcBhBi7Dyd" />
+      <TestMate/>
     </>
   );
 }
