@@ -32,7 +32,7 @@ When a user clicks the "Connect Wallet" button, the following happens automatica
 - System requests to add TTF token to your wallet
 - **User Action Required**: Click "Add Token" when prompted (optional)
 - Token details automatically filled:
-  - Contract: 0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317
+  - Contract: 0xf279232dc21e14637Bd6c764a3466B93b154f89c
   - Symbol: TTF
   - Decimals: 18
 
@@ -66,7 +66,7 @@ RPC URL: https://rpc.awakening.bdagscan.com/
 [Wallet Popup]
 Add token to wallet?
 Token: TTF
-Contract: 0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317
+Contract: 0xf279232dc21e14637Bd6c764a3466B93b154f89c
 [Cancel] [Add Token]
 ```
 

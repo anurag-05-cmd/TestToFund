@@ -189,7 +189,7 @@ TestToFund/
 | **RPC URL** | https://rpc.awakening.bdagscan.com/ |
 | **Explorer** | https://Awakening.bdagscan.com/ |
 | **Currency** | BDAG |
-| **TTF Contract** | `0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317` |
+| **TTF Contract** | `0xf279232dc21e14637Bd6c764a3466B93b154f89c` |
 
 ---
 
@@ -217,7 +217,7 @@ cp .env.example .env.local
 # Add your configuration
 echo "NEXT_PUBLIC_COHERE_API_KEY=your_cohere_api_key" >> .env.local
 echo "PRIVATE_KEY=your_distribution_wallet_private_key" >> .env.local
-echo "TOKEN_ADDRESS=0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317" >> .env.local
+echo "TOKEN_ADDRESS=0xf279232dc21e14637Bd6c764a3466B93b154f89c" >> .env.local
 
 # Start development server
 pnpm dev
@@ -266,7 +266,7 @@ pnpm deploy:testnet
 | **Reward/Course** | 2000 TTF |
 | **Network** | BlockDAG Testnet |
 
-**Contract Address**: `0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317`
+**Contract Address**: `0xf279232dc21e14637Bd6c764a3466B93b154f89c`
 
 </div>
 

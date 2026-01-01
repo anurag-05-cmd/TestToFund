@@ -25,7 +25,7 @@ export const NETWORK_NAME = NETWORK_CONFIG.chainName;
 export const CHAIN_ID = NETWORK_CONFIG.chainId;
 export const RPC_URL = NETWORK_CONFIG.rpcUrls[0];
 export const EXPLORER_URL = NETWORK_CONFIG.blockExplorerUrls[0];
-export const TOKEN_ADDRESS = "0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317";
+export const TOKEN_ADDRESS = "0xf279232dc21e14637Bd6c764a3466B93b154f89c";
 
 // --- Cache Keys ---
 const CACHE_KEY_NETWORK_ADDED = `ttf_network_added_${CHAIN_ID}`;

@@ -76,10 +76,10 @@ export default function NetworkSetupGuide() {
             <div className="flex items-center justify-between bg-gray-800/50 p-3 rounded-lg">
               <div>
                 <span className="text-sm text-gray-400">Contract Address:</span>
-                <p className="text-white font-mono text-sm break-all">0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317</p>
+                <p className="text-white font-mono text-sm break-all">0xf279232dc21e14637Bd6c764a3466B93b154f89c</p>
               </div>
               <button
-                onClick={() => copyToClipboard('0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317', 'contract')}
+                onClick={() => copyToClipboard('0xf279232dc21e14637Bd6c764a3466B93b154f89c', 'contract')}
                 className="ml-2 p-2 text-gray-400 hover:text-white transition-colors"
                 title="Copy Contract Address"
               >

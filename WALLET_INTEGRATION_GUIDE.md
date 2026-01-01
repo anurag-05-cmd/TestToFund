@@ -18,7 +18,7 @@ I've implemented a comprehensive wallet integration system that automatically ha
 - **Function**: `addTTFToken()`
 - **Capabilities**:
   - Checks if TTF token already exists in wallet
-  - Automatically adds token contract (0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317)
+  - Automatically adds token contract (0xf279232dc21e14637Bd6c764a3466B93b154f89c)
   - Handles user rejection gracefully
   - Sets token symbol as "TTF" with 18 decimals
 
@@ -156,7 +156,7 @@ The `connectWallet()` function now returns detailed information:
 | **Explorer URL** | https://Awakening.bdagscan.com/ |
 | **Currency Symbol** | BDAG |
 | **Faucet** | https://Awakening.bdagscan.com/faucet |
-| **TTF Token Contract** | 0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317 |
+| **TTF Token Contract** | 0xf279232dc21e14637Bd6c764a3466B93b154f89c |
 
 ## Security Features
 

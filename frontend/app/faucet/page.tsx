@@ -22,7 +22,7 @@ import { connectWallet, restoreWalletConnection, getWalletState, formatAddress }
 import { checkTokenBalance, startBalanceMonitoring, stopBalanceMonitoring } from '../../src/lib/tokenUtils';
 
 // Constants
-const TOKEN_ADDRESS = "0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317";
+const TOKEN_ADDRESS = "0xf279232dc21e14637Bd6c764a3466B93b154f89c";
 const EXPLORER_URL = "https://Awakening.bdagscan.com/";
 
 const ERC20_ABI = [

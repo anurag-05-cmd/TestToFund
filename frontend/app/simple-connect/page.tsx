@@ -70,7 +70,7 @@ export default function SimpleWalletConnect() {
           params: {
             type: 'ERC20',
             options: {
-              address: '0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317',
+              address: '0xf279232dc21e14637Bd6c764a3466B93b154f89c',
               symbol: 'TTF',
               decimals: 18,
             },
