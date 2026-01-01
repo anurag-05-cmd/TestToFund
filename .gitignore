@@ -2,4 +2,4 @@ backend/node_modules/
 Readme.md
 contracts/node_modules/
 .env*
-contracts/scripts/TestToFund.sol
+contracts/scripts/*.sol
