@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { ethers } from 'ethers';
+import { RPC_URL } from '@/src/lib/web3';
 
 // Simple in-memory storage for claimed addresses
 const claimedAddresses = new Set<string>();
@@ -131,11 +132,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Initialize blockchain connection
-    const privateKey = process.env.PRIVATE_KEY;
+    const privateKey = process.env.PRIVATE_KEY;;
     const rpcUrl = process.env.RPC_URL;
     const tokenAddress = process.env.TOKEN_ADDRESS;
     const rewardAmount = process.env.REWARD_AMOUNT || '2000';
-
+    console.log({privateKey,rpcUrl,tokenAddress});
     if (!privateKey || !rpcUrl || !tokenAddress) {
       return NextResponse.json(
         { error: 'Server configuration error' },
