@@ -501,7 +501,7 @@ export default function FaucetPage() {
                 <ul className="space-y-1 text-sm">
                   <li>• Network: BlockDAG Testnet</li>
                   <li>• Chain ID: 1043</li>
-                  <li>• RPC: rpc.Awakening.bdagscan.com</li>
+                  <li>• RPC: rpc.awakening.bdagscan.com</li>
                   <li>• TTF Contract: {TOKEN_ADDRESS.slice(0, 10)}...</li>
                 </ul>
               </div>
