@@ -1,8 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
 import { Wallet, Award, Upload, CheckCircle, Clock, ExternalLink, AlertCircle, TrendingUp, RefreshCw } from 'lucide-react';
-import { connectWallet, disconnectWallet, restoreWalletConnection, formatAddress } from '../../src/lib/web3Onboard';
-import { checkTokenBalance, startBalanceMonitoring, stopBalanceMonitoring } from '../../src/lib/tokenUtils';
 import BackgroundVideo from '../../src/components/BackgroundVideo';
 import NetworkStatus from '../../src/components/NetworkStatus';
 import NetworkSetupGuide from '../../src/components/NetworkSetupGuide';
@@ -10,6 +8,7 @@ import WalletDetection from '../../src/components/WalletDetection';
 import DepositNotification from '../../src/components/DepositNotification';
 import Navbar from '../../src/components/Navbar';
 import TestMate from '../../src/components/TestMate';
+import { useWallet } from '../../src/contexts/WalletContext';
 
 interface ClaimStatus {
   canClaim: boolean;
@@ -36,8 +35,18 @@ interface SuccessMessage {
 }
 
 export default function RewardsPage() {
-  const [walletAddress, setWalletAddress] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
+  // Use shared wallet context for persistent connection
+  const { 
+    address: walletAddress, 
+    isConnected, 
+    isLoading: walletLoading,
+    balance: tokenBalance,
+    connect, 
+    disconnect,
+    refreshBalance,
+    formatAddress
+  } = useWallet();
+
   const [certificate, setCertificate] = useState<File | null>(null);
   const [certificateUrl, setCertificateUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,56 +54,16 @@ export default function RewardsPage() {
   const [claimHistory, setClaimHistory] = useState<ClaimHistory[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<SuccessMessage | null>(null);
-  const [tokenBalance, setTokenBalance] = useState<string>('0');
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [depositNotification, setDepositNotification] = useState<{ amount: string } | null>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
 
-  // Initialize wallet connection on page load
+  // Load claim status and history when wallet connects
   useEffect(() => {
-    initializeWalletConnection();
-  }, []);
-
-  // Cleanup balance monitoring on unmount
-  useEffect(() => {
-    return () => {
-      stopBalanceMonitoring();
-    };
-  }, []);
-
-  async function initializeWalletConnection() {
-    try {
-      setIsInitializing(true);
-      console.log('🔄 Initializing wallet connection...');
-      
-      const restored = await restoreWalletConnection();
-      
-      if (restored.connected && restored.address) {
-        console.log('✅ Wallet connection restored:', restored.address);
-        setWalletAddress(restored.address);
-        setIsConnected(true);
-        
-        // Load data for the restored wallet
-        await Promise.all([
-          checkClaimEligibility(restored.address),
-          loadClaimHistory(restored.address),
-          checkWalletBalance()
-        ]);
-        
-        // Start balance monitoring for deposit notifications
-        startBalanceMonitoring(restored.address, (newBalance, difference) => {
-          setTokenBalance(newBalance);
-          setDepositNotification({ amount: difference });
-        });
-      } else {
-        console.log('ℹ️ No previous wallet connection found');
-      }
-    } catch (error) {
-      console.error('Failed to initialize wallet:', error);
-    } finally {
-      setIsInitializing(false);
+    if (walletAddress && isConnected) {
+      checkClaimEligibility(walletAddress);
+      loadClaimHistory(walletAddress);
     }
-  }
+  }, [walletAddress, isConnected]);
 
   // Check token balance
   async function checkWalletBalance() {
@@ -102,30 +71,13 @@ export default function RewardsPage() {
     
     setBalanceLoading(true);
     try {
-      const balance = await checkTokenBalance(walletAddress);
-      setTokenBalance(balance.balance);
+      await refreshBalance();
     } catch (err) {
       console.error('Failed to check balance:', err);
     } finally {
       setBalanceLoading(false);
     }
   }
-
-  // Auto-refresh balance when wallet address changes
-  useEffect(() => {
-    if (walletAddress && isConnected) {
-      checkWalletBalance();
-      
-      // Start balance monitoring for deposit notifications
-      startBalanceMonitoring(walletAddress, (newBalance, difference) => {
-        setTokenBalance(newBalance);
-        setDepositNotification({ amount: difference });
-      });
-    } else {
-      // Stop monitoring when wallet disconnected
-      stopBalanceMonitoring();
-    }
-  }, [walletAddress, isConnected]);
 
   // Connect wallet
   async function handleConnectWallet() {
@@ -134,40 +86,17 @@ export default function RewardsPage() {
       setLoading(true);
       
       console.log('🚀 Starting wallet connection process...');
-      const result = await connectWallet();
+      await connect();
       
-      setWalletAddress(result.address);
-      setIsConnected(true);
-      
-      // Show success message with details
-      const messages = [];
-      if (result.tokenAdded) {
-        messages.push('✅ TTF Token ready in your wallet');
-      }
-      
-      if (messages.length > 0) {
-        setSuccess({
-          message: `Wallet connected successfully! ${messages.join(', ')}`,
-          amount: '',
-          balance: ''
-        });
-        
-        // Clear success message after 4 seconds
-        setTimeout(() => setSuccess(null), 4000);
-      }
-      
-      // Load claim status, history, and token balance after connecting
-      await Promise.all([
-        checkClaimEligibility(result.address),
-        loadClaimHistory(result.address),
-        checkWalletBalance()
-      ]);
-      
-      // Start balance monitoring for deposit notifications
-      startBalanceMonitoring(result.address, (newBalance, difference) => {
-        setTokenBalance(newBalance);
-        setDepositNotification({ amount: difference });
+      // Show success message
+      setSuccess({
+        message: 'Wallet connected successfully!',
+        amount: '',
+        balance: ''
       });
+      
+      // Clear success message after 4 seconds
+      setTimeout(() => setSuccess(null), 4000);
       
     } catch (err: any) {
       console.error('❌ Wallet connection failed:', err);
@@ -179,30 +108,11 @@ export default function RewardsPage() {
 
   // Disconnect wallet
   async function handleDisconnectWallet() {
-    const confirmed = window.confirm('Are you sure you want to disconnect your wallet?');
-    
-    if (confirmed) {
-      try {
-        // Stop balance monitoring
-        stopBalanceMonitoring();
-        
-        // Disconnect using Web3 Onboard
-        await disconnectWallet();
-        
-        // Clear all wallet-related state
-        setWalletAddress('');
-        setIsConnected(false);
-        setClaimStatus({ canClaim: false });
-        setClaimHistory([]);
-        setTokenBalance('0');
-        setError(null);
-        setSuccess(null);
-        setDepositNotification(null);
-        
-        console.log('✅ Wallet disconnected successfully');
-      } catch (error) {
-        console.error('Failed to disconnect wallet:', error);
-      }
+    try {
+      await disconnect();
+      // Note: disconnect() will clear localStorage and reload the page
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error);
     }
   }
 
@@ -386,7 +296,7 @@ export default function RewardsPage() {
       
       <div className="relative z-10 min-h-screen pt-16">
         {/* Loading overlay for initialization */}
-        {isInitializing && (
+        {walletLoading && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
             <div className="bg-gray-900/90 border border-gray-700 rounded-xl p-6 text-center">
               <div className="flex items-center gap-3 text-white">
@@ -461,7 +371,7 @@ export default function RewardsPage() {
                   <CheckCircle className="w-4 h-4" />
                   Connected
                 </div>
-                <span className="font-mono text-sm text-gray-300">{formatAddress(walletAddress)}</span>
+                <span className="font-mono text-sm text-gray-300">{walletAddress ? formatAddress(walletAddress) : ''}</span>
               </div>
               
               {/* Disconnect Button */}
@@ -487,7 +397,7 @@ export default function RewardsPage() {
                         Loading...
                       </span>
                     ) : (
-                      `${parseFloat(tokenBalance).toLocaleString()} TTF`
+                      `${parseFloat(tokenBalance || '0').toLocaleString()} TTF`
                     )}
                   </p>
                 </div>

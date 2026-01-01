@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, Wallet, LogOut } from 'lucide-react';
-import { connectWallet, disconnectWallet, restoreWalletConnection, formatAddress } from '../lib/web3Onboard';
-import { checkTokenBalance } from '../lib/tokenUtils';
+import { Menu, X, Wallet, LogOut, Clock } from 'lucide-react';
+import { useWallet } from '../contexts/WalletContext';
 
 interface NavbarProps {
   showWalletConnect?: boolean;
@@ -11,73 +10,31 @@ interface NavbarProps {
 
 export default function Navbar({ showWalletConnect = true }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string>('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [tokenBalance, setTokenBalance] = useState<string>('0');
-  const [balanceLoading, setBalanceLoading] = useState(false);
-
-  useEffect(() => {
-    checkWalletConnection();
-  }, []);
-
-  const checkWalletConnection = async () => {
-    try {
-      const restored = await restoreWalletConnection();
-      if (restored.connected && restored.address) {
-        setWalletAddress(restored.address);
-        setIsConnected(true);
-        await checkWalletBalance(restored.address);
-      }
-    } catch (error) {
-      console.error('Failed to restore wallet:', error);
-    }
-  };
-
-  const checkWalletBalance = async (address?: string) => {
-    const targetAddress = address || walletAddress;
-    if (!targetAddress) return;
-    
-    setBalanceLoading(true);
-    try {
-      const balance = await checkTokenBalance(targetAddress);
-      setTokenBalance(balance.balance);
-    } catch (err) {
-      console.error('Failed to check balance:', err);
-    } finally {
-      setBalanceLoading(false);
-    }
-  };
-
-  // Auto-refresh balance when wallet address changes
-  useEffect(() => {
-    if (walletAddress) {
-      checkWalletBalance();
-    }
-  }, [walletAddress]);
+  
+  // Use shared wallet context
+  const { 
+    address: walletAddress, 
+    isConnected, 
+    isLoading,
+    balance: tokenBalance,
+    connect,
+    disconnect,
+    formatAddress
+  } = useWallet();
 
   const handleConnectWallet = async () => {
     try {
-      setIsConnecting(true);
-      const result = await connectWallet();
-      setWalletAddress(result.address);
-      setIsConnected(true);
-      await checkWalletBalance(result.address);
+      await connect();
       setIsMenuOpen(false); // Close mobile menu after connecting
     } catch (error: any) {
       console.error('Failed to connect wallet:', error);
-    } finally {
-      setIsConnecting(false);
     }
   };
 
   const handleDisconnectWallet = async () => {
     try {
-      await disconnectWallet();
-      setWalletAddress('');
-      setIsConnected(false);
-      setTokenBalance('0');
-      setIsMenuOpen(false); // Close mobile menu after disconnecting
+      await disconnect();
+      // Note: disconnect() will clear localStorage and reload the page
     } catch (error: any) {
       console.error('Failed to disconnect wallet:', error);
     }
@@ -131,7 +88,12 @@ export default function Navbar({ showWalletConnect = true }: NavbarProps) {
             {/* Wallet Connection - Desktop */}
             {showWalletConnect && (
               <div className="flex items-center">
-                {isConnected ? (
+                {isLoading ? (
+                  <div className="flex items-center gap-2 bg-gray-800 px-4 py-2 rounded-lg">
+                    <Clock className="w-4 h-4 animate-spin text-gray-400" />
+                    <span className="text-sm text-gray-400">Checking...</span>
+                  </div>
+                ) : isConnected && walletAddress ? (
                   <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2 bg-gray-800 px-3 py-2 rounded-lg">
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -139,7 +101,7 @@ export default function Navbar({ showWalletConnect = true }: NavbarProps) {
                         <span className="text-sm text-gray-300">{formatAddress(walletAddress)}</span>
                         <span className="text-xs text-gray-500">|</span>
                         <span className="text-sm text-[#00A88E] font-medium">
-                          {balanceLoading ? '...' : `${parseFloat(tokenBalance).toFixed(2)} TTF`}
+                          {tokenBalance ? `${parseFloat(tokenBalance).toFixed(2)} TTF` : '0 TTF'}
                         </span>
                       </div>
                     </div>
@@ -154,11 +116,11 @@ export default function Navbar({ showWalletConnect = true }: NavbarProps) {
                 ) : (
                   <button
                     onClick={handleConnectWallet}
-                    disabled={isConnecting}
+                    disabled={isLoading}
                     className="flex items-center gap-2 bg-white text-gray-900 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                   >
                     <Wallet className="w-4 h-4" />
-                    {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+                    {isLoading ? 'Connecting...' : 'Connect Wallet'}
                   </button>
                 )}
               </div>
@@ -210,14 +172,19 @@ export default function Navbar({ showWalletConnect = true }: NavbarProps) {
               {/* Wallet Connection - Mobile */}
               {showWalletConnect && (
                 <div className="border-t border-gray-800 pt-3 mt-3">
-                  {isConnected ? (
+                  {isLoading ? (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-md">
+                      <Clock className="w-4 h-4 animate-spin text-gray-400" />
+                      <span className="text-sm text-gray-400">Checking wallet...</span>
+                    </div>
+                  ) : isConnected && walletAddress ? (
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 px-3 py-2 bg-gray-800 rounded-md">
                         <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                         <div className="flex flex-col gap-1">
                           <span className="text-sm text-gray-300">{formatAddress(walletAddress)}</span>
                           <span className="text-xs text-[#00A88E] font-medium">
-                            {balanceLoading ? 'Loading...' : `${parseFloat(tokenBalance).toFixed(2)} TTF`}
+                            {tokenBalance ? `${parseFloat(tokenBalance).toFixed(2)} TTF` : '0 TTF'}
                           </span>
                         </div>
                       </div>
@@ -232,11 +199,11 @@ export default function Navbar({ showWalletConnect = true }: NavbarProps) {
                   ) : (
                     <button
                       onClick={handleConnectWallet}
-                      disabled={isConnecting}
+                      disabled={isLoading}
                       className="flex items-center gap-2 w-full bg-white text-gray-900 px-3 py-2 rounded-md font-medium hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       <Wallet className="w-4 h-4" />
-                      {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+                      {isLoading ? 'Connecting...' : 'Connect Wallet'}
                     </button>
                   )}
                 </div>

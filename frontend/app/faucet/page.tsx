@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { ethers } from 'ethers';
 import { 
@@ -18,8 +18,7 @@ import {
 import BackgroundVideo from '../../src/components/BackgroundVideo';
 import Navbar from '../../src/components/Navbar';
 import TestMate from '../../src/components/TestMate';
-import { connectWallet, restoreWalletConnection, getWalletState, formatAddress } from '../../src/lib/web3Onboard';
-import { checkTokenBalance, startBalanceMonitoring, stopBalanceMonitoring } from '../../src/lib/tokenUtils';
+import { useWallet } from '../../src/contexts/WalletContext';
 
 // Constants
 const TOKEN_ADDRESS = "0xf279232dc21e14637Bd6c764a3466B93b154f89c";
@@ -41,123 +40,52 @@ interface TransactionResult {
 }
 
 export default function FaucetPage() {
-  const [walletAddress, setWalletAddress] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  // Use shared wallet context for persistent connection
+  const { 
+    address: walletAddress, 
+    isConnected, 
+    isLoading, 
+    balance: tokenBalance,
+    connect, 
+    getSigner,
+    refreshBalance,
+    formatAddress
+  } = useWallet();
+
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [sendLoading, setSendLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
-  const [tokenBalance, setTokenBalance] = useState<string>('0');
-  const [balanceLoading, setBalanceLoading] = useState(false);
-  const [copyMessage, setCopyMessage] = useState('');
-  const [isInitializing, setIsInitializing] = useState(true);
-
-  // Initialize wallet connection on page load
-  useEffect(() => {
-    initializeWalletConnection();
-  }, []);
-
-  // Cleanup balance monitoring on unmount
-  useEffect(() => {
-    return () => {
-      stopBalanceMonitoring();
-    };
-  }, []);
-
-  async function initializeWalletConnection() {
-    try {
-      setIsInitializing(true);
-      console.log('🔄 Initializing wallet connection...');
-      
-      const restored = await restoreWalletConnection();
-      
-      if (restored.connected && restored.address) {
-        console.log('✅ Wallet connection restored:', restored.address);
-        setWalletAddress(restored.address);
-        setIsConnected(true);
-        
-        // Load wallet balance
-        await checkWalletBalance(restored.address);
-        
-        // Start balance monitoring
-        startBalanceMonitoring(restored.address, (newBalance) => {
-          setTokenBalance(newBalance);
-        });
-      } else {
-        console.log('ℹ️ No previous wallet connection found');
-      }
-    } catch (error) {
-      console.error('Failed to initialize wallet:', error);
-    } finally {
-      setIsInitializing(false);
-    }
-  }
-
-  // Check token balance
-  async function checkWalletBalance(address?: string) {
-    const targetAddress = address || walletAddress;
-    if (!targetAddress) return;
-    
-    setBalanceLoading(true);
-    try {
-      const balance = await checkTokenBalance(targetAddress);
-      setTokenBalance(balance.balance);
-    } catch (err) {
-      console.error('Failed to check balance:', err);
-    } finally {
-      setBalanceLoading(false);
-    }
-  }
-
-  // Auto-refresh balance when wallet address changes
-  useEffect(() => {
-    if (walletAddress) {
-      checkWalletBalance();
-    }
-  }, [walletAddress]);
 
   const handleConnect = async () => {
-    setIsLoading(true);
     try {
-      const result = await connectWallet();
-      if (result.address) {
-        setWalletAddress(result.address);
-        setIsConnected(true);
-        await checkWalletBalance(result.address);
-        
-        // Start balance monitoring
-        startBalanceMonitoring(result.address, (newBalance) => {
-          setTokenBalance(newBalance);
-        });
-      }
+      await connect();
     } catch (error) {
       console.error('Failed to connect wallet:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleSendTTF = async () => {
-    if (!isConnected || !recipient || !amount) {
+    if (!isConnected || !walletAddress || !recipient || !amount) {
       alert('Please connect wallet and fill all fields');
       return;
     }
 
     setSendLoading(true);
     try {
-      // Get provider from Web3 Onboard
-      const state = getWalletState();
-      const wallet = state.wallets[0];
-      const ethersProvider = new ethers.BrowserProvider(wallet.provider, 'any');
-      const signer = await ethersProvider.getSigner();
+      // Get signer from wallet context
+      const signer = await getSigner();
+      if (!signer) {
+        throw new Error('Unable to get signer. Please reconnect your wallet.');
+      }
+      
       const token = new ethers.Contract(TOKEN_ADDRESS, ERC20_ABI, signer);
       
       // Convert amount to wei (18 decimals)
       const amountWei = ethers.parseUnits(amount, 18);
       
-      // Send transaction
+      // Send transaction from user's wallet
       const tx = await token.transfer(recipient, amountWei);
       console.log('Transaction sent:', tx.hash);
       
@@ -174,12 +102,15 @@ export default function FaucetPage() {
       });
       setShowSuccessModal(true);
       
+      // Refresh balance after transfer
+      await refreshBalance();
+      
       // Clear form
       setRecipient('');
       setAmount('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Send failed:', error);
-      alert('Transaction failed. Please try again.');
+      alert(error.message || 'Transaction failed. Please try again.');
     } finally {
       setSendLoading(false);
     }
@@ -188,6 +119,22 @@ export default function FaucetPage() {
   const copyAddress = (addr: string) => {
     navigator.clipboard.writeText(addr);
   };
+
+  // Show loading while wallet context initializes
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <BackgroundVideo />
+        <div className="relative z-10 min-h-screen flex items-center justify-center">
+          <div className="text-white text-center">
+            <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4" />
+            <p>Checking wallet connection...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -405,7 +352,7 @@ export default function FaucetPage() {
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm text-gray-400">Your Address:</span>
                       <button
-                        onClick={() => copyAddress(walletAddress)}
+                        onClick={() => walletAddress && copyAddress(walletAddress)}
                         className="text-xs text-[#00A88E] hover:text-[#00967D] flex items-center gap-1"
                       >
                         <Copy className="w-3 h-3" />
