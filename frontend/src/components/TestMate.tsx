@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Minimize2, Maximize2, BotMessageSquare } from 'lucide-react';
+import { findBestMatch } from '../lib/chatbotKnowledge';
 
 interface Message {
   id: string;
@@ -45,87 +46,34 @@ export default function TestMate() {
     setInputMessage('');
     setIsLoading(true);
 
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_COHERE_API_KEY;
-      
-      if (!apiKey) {
-        throw new Error('Cohere API key not found in environment variables');
-      }
+    // Simulate a brief "thinking" delay for better UX
+    setTimeout(() => {
+      try {
+        // Use local knowledge base to find answer
+        const aiResponse = findBestMatch(text.trim());
 
-      // Use Cohere Chat API v1
-      const response = await fetch('https://api.cohere.ai/v1/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-          message: text,
-          model: 'command-a-03-2025',
-          preamble: `You are TestMate, a helpful AI assistant for the TestToFund platform. TestToFund is a learn-to-earn platform where users complete educational courses (especially Udemy courses) and earn TTF tokens as rewards. 
+        const aiMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: aiResponse,
+          isUser: false,
+          timestamp: new Date()
+        };
 
-Key features of TestToFund:
-- Users complete Udemy courses and upload certificates
-- Each verified completion earns 2000 TTF tokens
-- TTF tokens are distributed on BlockDAG Testnet (Chain ID: 1043)
-- Platform focuses on Python programming and Software Testing courses
-- Users connect their MetaMask wallet to receive rewards
-- Platform has anti-cheat measures and certificate verification
-- Built by Team EXPOSE: Anurag, Debapriya, Prithvi, and Sangram
-
-Provide helpful, friendly responses as TestMate. Keep responses concise but informative. If asked about technical details, be specific about TestToFund's features.`,
-          temperature: 0.7,
-          max_tokens: 200,
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Cohere API Error:', errorData);
+        setMessages(prev => [...prev, aiMessage]);
+      } catch (error: any) {
+        console.error('Error processing message:', error);
         
-        // Handle specific error codes
-        if (response.status === 429) {
-          throw new Error('RATE_LIMIT');
-        } else if (response.status === 401) {
-          throw new Error('Invalid API key. Please check your configuration.');
-        } else {
-          throw new Error(`Failed to get response from AI: ${response.status}`);
-        }
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: "I'm sorry, I encountered an error processing your question. Please try asking something else!",
+          isUser: false,
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
       }
-
-      const data = await response.json();
-      const aiResponse = data.text?.trim() || "I'm sorry, I couldn't generate a response. Please try again.";
-
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: aiResponse,
-        isUser: false,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-    } catch (error: any) {
-      console.error('Error sending message:', error);
-      
-      let errorText = "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.";
-      
-      // Provide specific error messages
-      if (error.message === 'RATE_LIMIT') {
-        errorText = "⚠️ Rate limit reached. The Cohere API has a limit on free tier usage. Please wait a few minutes before trying again, or consider upgrading your Cohere API plan at https://cohere.com/pricing";
-      } else if (error.message?.includes('API key')) {
-        errorText = "⚠️ API key configuration error. Please check your NEXT_PUBLIC_COHERE_API_KEY in .env.local";
-      }
-      
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: errorText,
-        isUser: false,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    }, 600); // 600ms delay for realistic feel
   };
 
   const handleSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
