@@ -108,7 +108,7 @@ export default function NetworkSetupGuide() {
           {/* Useful Links */}
           <div className="flex flex-wrap gap-3">
             <a
-              href="https://primordial.bdagscan.com/"
+              href="https://Awakening.bdagscan.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 bg-blue-800 hover:bg-blue-700 rounded text-sm transition-colors flex items-center gap-2"
@@ -117,7 +117,7 @@ export default function NetworkSetupGuide() {
               Block Explorer
             </a>
             <a
-              href="https://primordial.bdagscan.com/faucet"
+              href="https://Awakening.bdagscan.com/faucet"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2 bg-green-800 hover:bg-green-700 rounded text-sm transition-colors flex items-center gap-2"

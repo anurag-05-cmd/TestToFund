@@ -12,7 +12,7 @@ type Props = {
 
 export default function SendTokensResult({ txHash, senderBefore, senderAfter, receiver, toAddress, explorerBase }: Props) {
   if (!txHash) return null;
-  const explorer = (explorerBase || 'https://primordial.bdagscan.com/tx/') + txHash;
+  const explorer = (explorerBase || 'https://Awakening.bdagscan.com/tx/') + txHash;
   const copy = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);

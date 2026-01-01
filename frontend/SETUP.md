@@ -7,7 +7,7 @@
    - Add your private key (the wallet that will distribute tokens):
    ```
    PRIVATE_KEY=your_actual_private_key_here
-   RPC_URL=https://primordial.bdagscan.com/rpc
+   RPC_URL=https://Awakening.bdagscan.com/rpc
    TOKEN_ADDRESS=0x1fC39F5a1497C042A47054D94c6f473e39598853
    REWARD_AMOUNT=2000
    ```
@@ -37,6 +37,6 @@
 
 ## Transaction Details
 - Network: BDAG Testnet
-- Explorer: https://primordial.bdagscan.com
+- Explorer: https://Awakening.bdagscan.com
 - Gas fees are paid by the distribution wallet
 - Token contract: 0x1fC39F5a1497C042A47054D94c6f473e39598853

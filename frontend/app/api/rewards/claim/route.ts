@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Successfully claimed ${rewardAmount} TTF tokens!`,
       transactionHash: finalTxHash,
-      explorerUrl: `https://primordial.bdagscan.com/tx/${finalTxHash}?chain=EVM`,
+      explorerUrl: `https://Awakening.bdagscan.com/tx/${finalTxHash}?chain=EVM`,
       walletAddress,
       amount: rewardAmount,
       senderBalance: senderBalance ? ethers.formatUnits(senderBalance, 18) : '0',

@@ -56,7 +56,7 @@ export async function verifyTransaction(txHash: string) {
 }
 
 export function getExplorerUrl(txHash: string) {
-  return `https://primordial.bdagscan.com/tx/${txHash}?chain=EVM`;
+  return `https://Awakening.bdagscan.com/tx/${txHash}?chain=EVM`;
 }
 
 // Balance monitoring for notifications

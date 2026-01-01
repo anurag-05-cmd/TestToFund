@@ -12,18 +12,18 @@ When a user clicks the "Connect Wallet" button, the following happens automatica
 
 ### Step 2: Network Detection
 - System checks your current network
-- If you're already on Primordial BlockDAG Testnet → Skip to Step 4
+- If you're already on Awakening BlockDAG Testnet → Skip to Step 4
 - If you're on a different network → Continue to Step 3
 
 ### Step 3: Automatic Network Switch/Add
-- System attempts to switch to Primordial BlockDAG Testnet (Chain ID: 1043)
+- System attempts to switch to Awakening BlockDAG Testnet (Chain ID: 1043)
 - If network doesn't exist in your wallet:
   - **User Action Required**: Click "Add Network" when prompted
   - System automatically adds all network details:
-    - Network Name: Primordial BlockDAG Testnet
+    - Network Name: Awakening BlockDAG Testnet
     - Chain ID: 1043
     - RPC URL: https://rpc.awakening.bdagscan.com/
-    - Explorer: https://primordial.bdagscan.com/
+    - Explorer: https://Awakening.bdagscan.com/
     - Currency: BDAG
 - If network exists:
   - **User Action Required**: Click "Switch Network" when prompted
@@ -54,8 +54,8 @@ Connect to this site?
 ### 2. Add/Switch Network (if not on BlockDAG)
 ```
 [Wallet Popup]
-Add "Primordial BlockDAG Testnet" network?
-Network Name: Primordial BlockDAG Testnet
+Add "Awakening BlockDAG Testnet" network?
+Network Name: Awakening BlockDAG Testnet
 Chain ID: 1043
 RPC URL: https://rpc.awakening.bdagscan.com/
 [Cancel] [Add Network]
@@ -106,7 +106,7 @@ To verify the automatic setup works:
 After successful connection, you should see:
 ```
 ✅ Wallet connected successfully! 
-✅ Switched to Primordial BlockDAG Testnet, 
+✅ Switched to Awakening BlockDAG Testnet, 
 ✅ TTF Token added to your wallet
 ```
 

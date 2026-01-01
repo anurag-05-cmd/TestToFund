@@ -50,7 +50,7 @@ async function main() {
     // Print tx hash + BDAGScan URL
     console.log("✅ Transfer confirmed!");
     console.log("Transaction Hash:", tx.hash);
-    console.log(`View on Explorer: https://primordial.bdagscan.com/tx/${tx.hash}?chain=EVM`);
+    console.log(`View on Explorer: https://Awakening.bdagscan.com/tx/${tx.hash}?chain=EVM`);
 
     // Show balances after
     const balanceAfter = await token.balanceOf(wallet.address);

@@ -11,7 +11,7 @@ const onboard = Onboard({
     {
       id: '0x413', // 1043 in hex (BlockDAG Testnet)
       token: 'BDAG',
-      label: 'Primordial BlockDAG Testnet',
+      label: 'Awakening BlockDAG Testnet',
       rpcUrl: 'https://rpc.awakening.bdagscan.com/'
     }
   ],

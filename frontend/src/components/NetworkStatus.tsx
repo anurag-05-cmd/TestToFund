@@ -133,7 +133,7 @@ export default function NetworkStatus({ isConnected, onNetworkChange }: NetworkS
           </button>
           
           <a
-            href="https://primordial.bdagscan.com/faucet"
+            href="https://Awakening.bdagscan.com/faucet"
             target="_blank"
             rel="noopener noreferrer"
             className="px-4 py-2 border border-yellow-700 hover:border-yellow-600 rounded text-sm transition-colors flex items-center gap-2"

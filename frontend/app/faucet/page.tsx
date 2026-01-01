@@ -23,7 +23,7 @@ import { checkTokenBalance, startBalanceMonitoring, stopBalanceMonitoring } from
 
 // Constants
 const TOKEN_ADDRESS = "0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317";
-const EXPLORER_URL = "https://primordial.bdagscan.com/";
+const EXPLORER_URL = "https://Awakening.bdagscan.com/";
 
 const ERC20_ABI = [
   "function balanceOf(address) view returns (uint256)",
@@ -265,7 +265,7 @@ export default function FaucetPage() {
                       Copy
                     </button>
                     <a
-                      href={`https://primordial.bdagscan.com/tx/${transactionResult.txHash}`}
+                      href={`https://Awakening.bdagscan.com/tx/${transactionResult.txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-[#00A88E] hover:text-[#00967D] flex items-center gap-1"
@@ -353,7 +353,7 @@ export default function FaucetPage() {
               </div>
 
               <a
-                href="https://primordial.bdagscan.com/faucet?chain=EVM"
+                href="https://Awakening.bdagscan.com/faucet?chain=EVM"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 group"
@@ -501,7 +501,7 @@ export default function FaucetPage() {
                 <ul className="space-y-1 text-sm">
                   <li>• Network: BlockDAG Testnet</li>
                   <li>• Chain ID: 1043</li>
-                  <li>• RPC: rpc.primordial.bdagscan.com</li>
+                  <li>• RPC: rpc.Awakening.bdagscan.com</li>
                   <li>• TTF Contract: {TOKEN_ADDRESS.slice(0, 10)}...</li>
                 </ul>
               </div>

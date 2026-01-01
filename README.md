@@ -10,7 +10,7 @@
 [![Next.js](https://img.shields.io/badge/Next.js-15.5.2-000000?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Solidity](https://img.shields.io/badge/Solidity-^0.8.19-363636?logo=solidity)](https://soliditylang.org/)
-[![BlockDAG](https://img.shields.io/badge/BlockDAG-Testnet-green)](https://primordial.bdagscan.com/)
+[![BlockDAG](https://img.shields.io/badge/BlockDAG-Testnet-green)](https://Awakening.bdagscan.com/)
 
 🌐 **[Live Demo](https://ttf.expose.software)** | 📖 **[Documentation](#documentation)** | 🚀 **[Quick Start](#quick-start)**
 
@@ -184,10 +184,10 @@ TestToFund/
 
 | Parameter | Value |
 |-----------|-------|
-| **Network** | Primordial BlockDAG Testnet |
+| **Network** | Awakening BlockDAG Testnet |
 | **Chain ID** | 1043 |
 | **RPC URL** | https://rpc.awakening.bdagscan.com/ |
-| **Explorer** | https://primordial.bdagscan.com/ |
+| **Explorer** | https://Awakening.bdagscan.com/ |
 | **Currency** | BDAG |
 | **TTF Contract** | `0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317` |
 

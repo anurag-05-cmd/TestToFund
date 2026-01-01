@@ -10,15 +10,15 @@ declare global {
 // --- Network Config ---
 export const NETWORK_CONFIG = {
   chainId: 1043,
-  chainName: "Primordial BlockDAG Testnet",
+  chainName: "Awakening BlockDAG Testnet",
   nativeCurrency: {
     name: "BDAG",
     symbol: "BDAG",
     decimals: 18
   },
   rpcUrls: ["https://rpc.awakening.bdagscan.com/"],
-  blockExplorerUrls: ["https://primordial.bdagscan.com/"],
-  faucetUrls: ["https://primordial.bdagscan.com/faucet"]
+  blockExplorerUrls: ["https://Awakening.bdagscan.com/"],
+  faucetUrls: ["https://Awakening.bdagscan.com/faucet"]
 };
 
 export const NETWORK_NAME = NETWORK_CONFIG.chainName;

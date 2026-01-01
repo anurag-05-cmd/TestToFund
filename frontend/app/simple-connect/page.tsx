@@ -43,14 +43,14 @@ export default function SimpleWalletConnect() {
               method: 'wallet_addEthereumChain',
               params: [{
                 chainId: '0x413',
-                chainName: 'Primordial BlockDAG Testnet',
+                chainName: 'Awakening BlockDAG Testnet',
                 nativeCurrency: {
                   name: 'BDAG',
                   symbol: 'BDAG',
                   decimals: 18
                 },
                 rpcUrls: ['https://rpc.awakening.bdagscan.com/'],
-                blockExplorerUrls: ['https://primordial.bdagscan.com/']
+                blockExplorerUrls: ['https://Awakening.bdagscan.com/']
               }]
             });
             setResult(prev => prev + 'Successfully added and switched to network!\n');

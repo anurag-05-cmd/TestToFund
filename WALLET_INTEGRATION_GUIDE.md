@@ -10,7 +10,7 @@ I've implemented a comprehensive wallet integration system that automatically ha
 - **Function**: `connectWallet()`
 - **Capabilities**:
   - Detects current network chain ID
-  - Automatically switches to Primordial BlockDAG Testnet (Chain ID: 1043)
+  - Automatically switches to Awakening BlockDAG Testnet (Chain ID: 1043)
   - Adds network if it doesn't exist in user's wallet
   - Provides detailed console logging for debugging
 
@@ -33,15 +33,15 @@ I've implemented a comprehensive wallet integration system that automatically ha
 ```typescript
 export const NETWORK_CONFIG = {
   chainId: 1043,
-  chainName: "Primordial BlockDAG Testnet",
+  chainName: "Awakening BlockDAG Testnet",
   nativeCurrency: {
     name: "BDAG",
     symbol: "BDAG", 
     decimals: 18
   },
   rpcUrls: ["https://rpc.awakening.bdagscan.com/"],
-  blockExplorerUrls: ["https://primordial.bdagscan.com/"],
-  faucetUrls: ["https://primordial.bdagscan.com/faucet"]
+  blockExplorerUrls: ["https://Awakening.bdagscan.com/"],
+  faucetUrls: ["https://Awakening.bdagscan.com/faucet"]
 };
 ```
 
@@ -150,12 +150,12 @@ The `connectWallet()` function now returns detailed information:
 
 | Parameter | Value |
 |-----------|-------|
-| **Network Name** | Primordial BlockDAG Testnet |
+| **Network Name** | Awakening BlockDAG Testnet |
 | **Chain ID** | 1043 |
 | **RPC URL** | https://rpc.awakening.bdagscan.com/ |
-| **Explorer URL** | https://primordial.bdagscan.com/ |
+| **Explorer URL** | https://Awakening.bdagscan.com/ |
 | **Currency Symbol** | BDAG |
-| **Faucet** | https://primordial.bdagscan.com/faucet |
+| **Faucet** | https://Awakening.bdagscan.com/faucet |
 | **TTF Token Contract** | 0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317 |
 
 ## Security Features

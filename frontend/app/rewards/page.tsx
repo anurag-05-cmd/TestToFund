@@ -443,7 +443,7 @@ export default function RewardsPage() {
             <div className="mt-6 p-4 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-gray-300">
               <h4 className="font-semibold mb-2 text-white">Network Requirements:</h4>
               <div className="space-y-1 text-left">
-                <p><span className="text-gray-400">Network:</span> Primordial BlockDAG Testnet</p>
+                <p><span className="text-gray-400">Network:</span> Awakening BlockDAG Testnet</p>
                 <p><span className="text-gray-400">Chain ID:</span> 1043</p>
                 <p><span className="text-gray-400">RPC URL:</span> https://rpc.awakening.bdagscan.com/</p>
                 <p><span className="text-gray-400">Currency:</span> BDAG</p>
@@ -704,7 +704,7 @@ export default function RewardsPage() {
                   <div className="text-sm">
                     <span className="text-gray-600">Transaction: </span>
                     <a
-                      href={`https://primordial.bdagscan.com/tx/${claim.txHash}`}
+                      href={`https://Awakening.bdagscan.com/tx/${claim.txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-[#409F01] hover:text-[#367A01] underline break-all"
