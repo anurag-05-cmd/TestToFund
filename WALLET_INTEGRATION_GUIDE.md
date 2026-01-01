@@ -39,7 +39,7 @@ export const NETWORK_CONFIG = {
     symbol: "BDAG", 
     decimals: 18
   },
-  rpcUrls: ["https://rpc.primordial.bdagscan.com/"],
+  rpcUrls: ["https://rpc.awakening.bdagscan.com/"],
   blockExplorerUrls: ["https://primordial.bdagscan.com/"],
   faucetUrls: ["https://primordial.bdagscan.com/faucet"]
 };
@@ -152,7 +152,7 @@ The `connectWallet()` function now returns detailed information:
 |-----------|-------|
 | **Network Name** | Primordial BlockDAG Testnet |
 | **Chain ID** | 1043 |
-| **RPC URL** | https://rpc.primordial.bdagscan.com/ |
+| **RPC URL** | https://rpc.awakening.bdagscan.com/ |
 | **Explorer URL** | https://primordial.bdagscan.com/ |
 | **Currency Symbol** | BDAG |
 | **Faucet** | https://primordial.bdagscan.com/faucet |

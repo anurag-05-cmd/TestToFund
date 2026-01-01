@@ -49,7 +49,7 @@ export default function SimpleWalletConnect() {
                   symbol: 'BDAG',
                   decimals: 18
                 },
-                rpcUrls: ['https://rpc.primordial.bdagscan.com/'],
+                rpcUrls: ['https://rpc.awakening.bdagscan.com/'],
                 blockExplorerUrls: ['https://primordial.bdagscan.com/']
               }]
             });

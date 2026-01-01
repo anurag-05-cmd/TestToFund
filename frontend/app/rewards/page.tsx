@@ -445,7 +445,7 @@ export default function RewardsPage() {
               <div className="space-y-1 text-left">
                 <p><span className="text-gray-400">Network:</span> Primordial BlockDAG Testnet</p>
                 <p><span className="text-gray-400">Chain ID:</span> 1043</p>
-                <p><span className="text-gray-400">RPC URL:</span> https://rpc.primordial.bdagscan.com/</p>
+                <p><span className="text-gray-400">RPC URL:</span> https://rpc.awakening.bdagscan.com/</p>
                 <p><span className="text-gray-400">Currency:</span> BDAG</p>
               </div>
               <p className="mt-2 text-xs text-gray-500">

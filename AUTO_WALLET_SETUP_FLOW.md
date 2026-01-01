@@ -22,7 +22,7 @@ When a user clicks the "Connect Wallet" button, the following happens automatica
   - System automatically adds all network details:
     - Network Name: Primordial BlockDAG Testnet
     - Chain ID: 1043
-    - RPC URL: https://rpc.primordial.bdagscan.com/
+    - RPC URL: https://rpc.awakening.bdagscan.com/
     - Explorer: https://primordial.bdagscan.com/
     - Currency: BDAG
 - If network exists:
@@ -57,7 +57,7 @@ Connect to this site?
 Add "Primordial BlockDAG Testnet" network?
 Network Name: Primordial BlockDAG Testnet
 Chain ID: 1043
-RPC URL: https://rpc.primordial.bdagscan.com/
+RPC URL: https://rpc.awakening.bdagscan.com/
 [Cancel] [Add Network]
 ```
 

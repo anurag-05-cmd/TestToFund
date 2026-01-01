@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
 const TOKEN_ADDRESS = '0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317';
-const RPC_URL = 'https://rpc.primordial.bdagscan.com/';
+const RPC_URL = 'https://rpc.awakening.bdagscan.com/';
 
 // ERC20 ABI for balance checking
 const ERC20_ABI = [

@@ -186,7 +186,7 @@ TestToFund/
 |-----------|-------|
 | **Network** | Primordial BlockDAG Testnet |
 | **Chain ID** | 1043 |
-| **RPC URL** | https://rpc.primordial.bdagscan.com/ |
+| **RPC URL** | https://rpc.awakening.bdagscan.com/ |
 | **Explorer** | https://primordial.bdagscan.com/ |
 | **Currency** | BDAG |
 | **TTF Contract** | `0xC02953cdC83C79dB721A25a6d9F0bf5BcC530317` |
@@ -235,7 +235,7 @@ cp .env.example .env
 # Add MongoDB and blockchain settings
 echo "MONGODB_URI=your_mongodb_connection_string" >> .env
 echo "JWT_SECRET=your_jwt_secret" >> .env
-echo "BLOCKCHAIN_RPC_URL=https://rpc.primordial.bdagscan.com/" >> .env
+echo "BLOCKCHAIN_RPC_URL=https://rpc.awakening.bdagscan.com/" >> .env
 
 # Start server
 pnpm dev

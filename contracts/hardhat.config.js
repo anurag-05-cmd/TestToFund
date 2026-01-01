@@ -7,7 +7,7 @@ module.exports = {
   solidity: "0.8.19",
   networks: {
     testnet: {
-      url: RPC_URL || "https://rpc.primordial.bdagscan.com/",
+      url: RPC_URL || "https://rpc.awakening.bdagscan.com/",
       accounts: PRIVATE_KEY ? [PRIVATE_KEY] : []
     },
     hardhat: {}
